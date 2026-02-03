@@ -1,0 +1,379 @@
+// Database package - exports Prisma client
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum Role {
+  CITIZEN
+  ADMIN
+  STAFF
+}
+
+enum ServiceType {
+  ELECTRICITY
+  GAS
+  WATER
+  MUNICIPAL
+}
+
+enum ConnectionStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  DISCONNECTED
+}
+
+enum BillStatus {
+  UNPAID
+  PAID
+  OVERDUE
+  PARTIAL
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  UPI
+  CARD
+  NET_BANKING
+  WALLET
+  CASH
+}
+
+enum GrievanceStatus {
+  SUBMITTED
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+  REJECTED
+}
+
+enum GrievancePriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum NotificationType {
+  BILL_DUE
+  PAYMENT_SUCCESS
+  OUTAGE_ALERT
+  GRIEVANCE_UPDATE
+  SERVICE_UPDATE
+  EMERGENCY
+}
+
+// ============================================
+// USER & AUTH
+// ============================================
+
+model User {
+  id            String    @id @default(cuid())
+  phone         String    @unique
+  email         String?   @unique
+  aadhaarHash   String?   // Hashed Aadhaar for verification
+  name          String
+  address       String?
+  city          String?
+  state         String?
+  pincode       String?
+  role          Role      @default(CITIZEN)
+  language      String    @default("en") // en, hi
+  isVerified    Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  connections   ServiceConnection[]
+  bills         Bill[]
+  payments      Payment[]
+  grievances    Grievance[]
+  notifications Notification[]
+  documents     Document[]
+  sessions      Session[]
+
+  @@index([phone])
+  @@index([email])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  token        String   @unique
+  refreshToken String   @unique
+  kioskId      String?  // Track which kiosk was used
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+}
+
+// ============================================
+// SERVICE CONNECTIONS
+// ============================================
+
+model ServiceConnection {
+  id              String           @id @default(cuid())
+  userId          String
+  serviceType     ServiceType
+  connectionNo    String           @unique
+  meterNo         String?
+  status          ConnectionStatus @default(PENDING)
+  address         String
+  city            String
+  state           String
+  pincode         String
+  sanctionedLoad  Float?           // For electricity (in kW)
+  connectionDate  DateTime?
+  lastReadingDate DateTime?
+  lastReading     Float?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bills        Bill[]
+  meterReadings MeterReading[]
+  grievances   Grievance[]
+
+  @@index([userId])
+  @@index([connectionNo])
+  @@index([serviceType])
+}
+
+model MeterReading {
+  id           String   @id @default(cuid())
+  connectionId String
+  reading      Float
+  readingDate  DateTime
+  submittedBy  String   // "CITIZEN" or "STAFF"
+  imageUrl     String?  // Photo of meter reading
+  isVerified   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  connection ServiceConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@index([connectionId])
+}
+
+// ============================================
+// BILLING & PAYMENTS
+// ============================================
+
+model Bill {
+  id              String      @id @default(cuid())
+  userId          String
+  connectionId    String
+  billNo          String      @unique
+  billDate        DateTime
+  dueDate         DateTime
+  periodFrom      DateTime
+  periodTo        DateTime
+  unitsConsumed   Float?
+  amount          Float
+  lateFee         Float       @default(0)
+  totalAmount     Float
+  amountPaid      Float       @default(0)
+  status          BillStatus  @default(UNPAID)
+  pdfUrl          String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  connection ServiceConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  payments   Payment[]
+
+  @@index([userId])
+  @@index([connectionId])
+  @@index([status])
+  @@index([dueDate])
+}
+
+model Payment {
+  id              String        @id @default(cuid())
+  userId          String
+  billId          String
+  amount          Float
+  method          PaymentMethod
+  status          PaymentStatus @default(PENDING)
+  transactionId   String?       @unique
+  gatewayResponse Json?
+  receiptNo       String?       @unique
+  receiptUrl      String?
+  kioskId         String?
+  paidAt          DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bill Bill @relation(fields: [billId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([billId])
+  @@index([status])
+  @@index([transactionId])
+}
+
+// ============================================
+// GRIEVANCES
+// ============================================
+
+model Grievance {
+  id              String            @id @default(cuid())
+  userId          String
+  connectionId    String?
+  ticketNo        String            @unique
+  serviceType     ServiceType
+  category        String            // e.g., "Billing Issue", "Outage", "New Connection"
+  subject         String
+  description     String
+  priority        GrievancePriority @default(MEDIUM)
+  status          GrievanceStatus   @default(SUBMITTED)
+  assignedTo      String?           // Staff user ID
+  resolvedAt      DateTime?
+  resolution      String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  connection ServiceConnection? @relation(fields: [connectionId], references: [id])
+  timeline   GrievanceTimeline[]
+  attachments Document[]
+
+  @@index([userId])
+  @@index([ticketNo])
+  @@index([status])
+  @@index([serviceType])
+}
+
+model GrievanceTimeline {
+  id          String   @id @default(cuid())
+  grievanceId String
+  action      String
+  description String
+  actionBy    String   // User ID or "SYSTEM"
+  createdAt   DateTime @default(now())
+
+  grievance Grievance @relation(fields: [grievanceId], references: [id], onDelete: Cascade)
+
+  @@index([grievanceId])
+}
+
+// ============================================
+// NOTIFICATIONS
+// ============================================
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  titleHi   String?          // Hindi title
+  message   String
+  messageHi String?          // Hindi message
+  data      Json?            // Additional payload
+  isRead    Boolean          @default(false)
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([type])
+}
+
+// System-wide alerts (outages, emergencies)
+model SystemAlert {
+  id          String      @id @default(cuid())
+  serviceType ServiceType
+  title       String
+  titleHi     String?
+  message     String
+  messageHi   String?
+  affectedArea String?    // Pincode or area name
+  severity    String      // "info", "warning", "critical"
+  isActive    Boolean     @default(true)
+  startsAt    DateTime
+  endsAt      DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([serviceType])
+  @@index([isActive])
+}
+
+// ============================================
+// DOCUMENTS
+// ============================================
+
+model Document {
+  id          String    @id @default(cuid())
+  userId      String
+  grievanceId String?
+  name        String
+  type        String    // "ID_PROOF", "ADDRESS_PROOF", "RECEIPT", "CERTIFICATE"
+  mimeType    String
+  url         String
+  size        Int
+  createdAt   DateTime  @default(now())
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  grievance Grievance? @relation(fields: [grievanceId], references: [id])
+
+  @@index([userId])
+  @@index([grievanceId])
+}
+
+// ============================================
+// KIOSK MANAGEMENT
+// ============================================
+
+model Kiosk {
+  id          String   @id @default(cuid())
+  name        String
+  location    String
+  address     String
+  city        String
+  state       String
+  pincode     String
+  isOnline    Boolean  @default(true)
+  lastPingAt  DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  logs KioskLog[]
+
+  @@index([isOnline])
+}
+
+model KioskLog {
+  id        String   @id @default(cuid())
+  kioskId   String
+  action    String   // "LOGIN", "PAYMENT", "GRIEVANCE", "PRINT"
+  userId    String?
+  details   Json?
+  createdAt DateTime @default(now())
+
+  kiosk Kiosk @relation(fields: [kioskId], references: [id], onDelete: Cascade)
+
+  @@index([kioskId])
+  @@index([createdAt])
+}

@@ -1,0 +1,105 @@
+@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500;600;700&family=Lato:wght@300;400;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 222 47% 11%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 215 25% 27%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 200 98% 39%;
+    --radius: 0.5rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-body;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading;
+  }
+}
+
+/* Touch-friendly kiosk styles */
+@layer components {
+  .kiosk-button {
+    @apply min-h-[60px] min-w-[60px] px-6 py-4 text-lg font-medium
+           transition-all duration-200 ease-out
+           focus:outline-none focus:ring-4 focus:ring-cta/30
+           active:scale-[0.98] cursor-pointer;
+  }
+
+  .kiosk-card {
+    @apply bg-white rounded-xl shadow-kiosk p-6
+           transition-all duration-200
+           hover:shadow-kiosk-hover cursor-pointer;
+  }
+
+  .service-icon {
+    @apply w-16 h-16 rounded-xl flex items-center justify-center
+           transition-transform duration-200 hover:scale-105;
+  }
+
+  .kiosk-input {
+    @apply h-14 text-lg px-4 rounded-lg border-2 border-gray-200
+           focus:border-cta focus:ring-2 focus:ring-cta/20
+           transition-colors duration-200;
+  }
+
+  .skip-link {
+    @apply sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4
+           focus:z-50 focus:bg-cta focus:text-white focus:px-4 focus:py-2
+           focus:rounded-md;
+  }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  :root {
+    --border: 0 0% 0%;
+    --ring: 0 0% 0%;
+  }
+}
+
+/* Print styles for receipts */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  body {
+    background: white;
+    color: black;
+  }
+}
