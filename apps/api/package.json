@@ -6,7 +6,8 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "test": "vitest"
+    "test": "vitest",
+    "worker:electricity": "tsx src/workers/electricity-worker.ts"
   },
   "dependencies": {
     "@suvidha/database": "*",

@@ -28,7 +28,11 @@ async function main() {
   const connections = await Promise.all([
     prisma.serviceConnection.upsert({
       where: { connectionNo: "ELEC-2024-001234" },
-      update: {},
+      update: {
+        loadType: "RESIDENTIAL",
+        phase: "SINGLE",
+        sanctionedLoad: 5.0,
+      },
       create: {
         userId: user.id,
         serviceType: "ELECTRICITY",
@@ -40,6 +44,9 @@ async function main() {
         pincode: "110001",
         status: "ACTIVE",
         connectionDate: new Date("2023-01-15"),
+        loadType: "RESIDENTIAL",
+        phase: "SINGLE",
+        sanctionedLoad: 5.0,
       },
     }),
     prisma.serviceConnection.upsert({
@@ -216,6 +223,30 @@ async function main() {
     },
   });
   console.log("✅ Created system alerts");
+
+  // Create electricity tariffs - Assam 2025 Rates (APDCL)
+  const tariffs = [
+    // Residential/Domestic Tariffs (Assam April 2025)
+    // 0-120 units: ₹4.90/unit + ₹0.69 FPPPA = ₹5.59/unit effective
+    { serviceType: 'ELECTRICITY', loadType: 'RESIDENTIAL', slabStart: 0, slabEnd: 120, ratePerUnit: 4.90, fixedCharge: 60 },
+    // 121-240 units: ₹6.30/unit + ₹0.69 FPPPA = ₹6.99/unit effective  
+    { serviceType: 'ELECTRICITY', loadType: 'RESIDENTIAL', slabStart: 120, slabEnd: 240, ratePerUnit: 6.30, fixedCharge: 60 },
+    // Above 240 units: ₹7.50/unit + ₹0.69 FPPPA = ₹8.19/unit effective
+    { serviceType: 'ELECTRICITY', loadType: 'RESIDENTIAL', slabStart: 240, slabEnd: null, ratePerUnit: 7.50, fixedCharge: 60 },
+
+    // Commercial Tariffs (Reduced by 25 paisa from ₹8.60)
+    { serviceType: 'ELECTRICITY', loadType: 'COMMERCIAL', slabStart: 0, slabEnd: 500, ratePerUnit: 8.35, fixedCharge: 150 },
+    { serviceType: 'ELECTRICITY', loadType: 'COMMERCIAL', slabStart: 500, slabEnd: null, ratePerUnit: 9.50, fixedCharge: 150 },
+
+    // Industrial Tariffs
+    { serviceType: 'ELECTRICITY', loadType: 'INDUSTRIAL', slabStart: 0, slabEnd: 1000, ratePerUnit: 7.00, fixedCharge: 200 },
+    { serviceType: 'ELECTRICITY', loadType: 'INDUSTRIAL', slabStart: 1000, slabEnd: null, ratePerUnit: 8.00, fixedCharge: 200 },
+  ];
+
+  for (const tariff of tariffs) {
+    await prisma.tariff.create({ data: tariff as any });
+  }
+  console.log(`✅ Created ${tariffs.length} electricity tariffs (Assam 2025 rates)`);
 
   console.log("\n🎉 Seed completed successfully!");
   console.log("\n📋 Test Login:");

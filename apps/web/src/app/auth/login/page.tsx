@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { ArrowLeft, Phone, KeyRound, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,18 +15,27 @@ import { useAuthStore } from "@/lib/store/auth";
 export default function LoginPage() {
   const { t } = useTranslation();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const { login } = useAuthStore();
-  
+
   const [step, setStep] = useState<"phone" | "otp">("phone");
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [mockOtp, setMockOtp] = useState<string | null>(null);
+  const [returnUrl, setReturnUrl] = useState<string>("/dashboard");
+
+  useEffect(() => {
+    const url = searchParams.get('returnUrl');
+    if (url) {
+      setReturnUrl(decodeURIComponent(url));
+    }
+  }, [searchParams]);
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!/^[6-9]\d{9}$/.test(phone)) {
       toast({
         title: "Invalid Phone",
@@ -35,18 +44,18 @@ export default function LoginPage() {
       });
       return;
     }
-    
+
     setLoading(true);
-    
+
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/auth/send-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ phone }),
       });
-      
+
       const data = await res.json();
-      
+
       if (data.success) {
         setStep("otp");
         // For development - show mock OTP
@@ -73,7 +82,7 @@ export default function LoginPage() {
 
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (otp.length !== 6) {
       toast({
         title: "Invalid OTP",
@@ -82,26 +91,28 @@ export default function LoginPage() {
       });
       return;
     }
-    
+
     setLoading(true);
-    
+
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ phone, otp }),
       });
-      
+
       const data = await res.json();
-      
+
       if (data.success) {
         login(data.data.user, data.data.tokens);
+
         toast({
-          title: "Welcome!",
-          description: `Logged in as ${data.data.user.name}`,
-          variant: "success",
+          title: t("auth.loginSuccess"),
+          description: `Welcome back, ${data.data.user.name}!`,
         });
-        router.push("/dashboard");
+
+        // Redirect to returnUrl or dashboard
+        router.push(returnUrl);
       } else {
         throw new Error(data.error || "Login failed");
       }

@@ -19,6 +19,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/lib/store/auth";
+import { ElectricityDashboard } from "@/components/electricity/electricity-dashboard";
+
 
 interface Connection {
   id: string;
@@ -39,11 +41,11 @@ interface Bill {
   billPeriod: string;
 }
 
-const SERVICE_CONFIG: Record<string, { 
-  name: string; 
+const SERVICE_CONFIG: Record<string, {
+  name: string;
   nameHi: string;
-  icon: any; 
-  color: string; 
+  icon: any;
+  color: string;
   bg: string;
   features: string[];
 }> = {
@@ -109,7 +111,7 @@ export default function ServicePage() {
   const fetchServiceData = async () => {
     try {
       const headers = { Authorization: `Bearer ${tokens?.accessToken}` };
-      
+
       // Fetch connections for this service
       const connRes = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/connections?serviceType=${serviceType.toUpperCase()}`,
@@ -137,6 +139,11 @@ export default function ServicePage() {
   };
 
   if (!config || !isAuthenticated) return null;
+
+  // Use dedicated Electricity Dashboard for electricity service
+  if (serviceType?.toLowerCase() === 'electricity') {
+    return <ElectricityDashboard />;
+  }
 
   const Icon = config.icon;
   const displayName = i18n.language === "hi" ? config.nameHi : config.name;
@@ -191,16 +198,16 @@ export default function ServicePage() {
                 key={feature}
                 href={
                   feature.includes("Bill") ? "/bills" :
-                  feature.includes("Connection") ? "/connections/new" :
-                  "/grievances/new"
+                    feature.includes("Connection") ? "/connections/new" :
+                      "/grievances/new"
                 }
                 className="kiosk-card flex flex-col items-center text-center p-4 hover:border-cta border-2 border-transparent"
               >
                 <div className={`w-10 h-10 ${config.bg} rounded-lg flex items-center justify-center mb-2`}>
                   {idx === 0 ? <FileText className={`w-5 h-5 ${config.color}`} /> :
-                   idx === 1 ? <Gauge className={`w-5 h-5 ${config.color}`} /> :
-                   idx === 2 ? <AlertCircle className={`w-5 h-5 ${config.color}`} /> :
-                   <Plus className={`w-5 h-5 ${config.color}`} />}
+                    idx === 1 ? <Gauge className={`w-5 h-5 ${config.color}`} /> :
+                      idx === 2 ? <AlertCircle className={`w-5 h-5 ${config.color}`} /> :
+                        <Plus className={`w-5 h-5 ${config.color}`} />}
                 </div>
                 <span className="text-sm font-medium text-primary">{feature}</span>
               </Link>
@@ -250,9 +257,8 @@ export default function ServicePage() {
                         <p className="font-medium">{conn.lastReading} units</p>
                       </div>
                     )}
-                    <span className={`px-2 py-1 text-xs rounded-full ${
-                      conn.status === "ACTIVE" ? "bg-success/10 text-success" : "bg-slate-100 text-slate-600"
-                    }`}>
+                    <span className={`px-2 py-1 text-xs rounded-full ${conn.status === "ACTIVE" ? "bg-success/10 text-success" : "bg-slate-100 text-slate-600"
+                      }`}>
                       {conn.status}
                     </span>
                   </div>

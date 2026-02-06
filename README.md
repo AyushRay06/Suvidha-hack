@@ -47,6 +47,9 @@ npm run db:generate
 # Push schema to database
 npm run db:push
 
+# Seed database with Assam Tariffs & Demo Data
+npm run db:seed --prefix packages/database
+
 # Start development servers
 npm run dev
 ```
@@ -60,12 +63,18 @@ npm run dev
 ## Features
 
 ### For Citizens
-- 🔐 OTP-based authentication
-- 💡 Multi-service access (Electricity, Gas, Water, Municipal)
+- 🔐 **Smart Authentication**: Simplified demo login & OTP support
+- ⚡ **Assam Power (APDCL) Integration**: 
+  - Real-time bill calculation with **April 2025 Tariff Rates**
+  - Automatic **FPPPA Charge** calculation (₹0.69/unit)
+  - Slab-based billing (0-120, 121-240, >240 units)
+- 📉 **Unified Meter Reading**:
+  - Instant bill estimation while typing
+  - Seamless submission with photo verification
 - 💳 Bill payments with mock payment gateway
 - 📝 Grievance submission and tracking
 - 🔔 Real-time notifications and alerts
-- 🌐 Bilingual support (English/Hindi)
+- 🌐 Bilingual support (English/Assamese/Hindi)
 
 ### For Admins
 - 📊 Dashboard with usage analytics

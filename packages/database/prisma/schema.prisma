@@ -142,6 +142,8 @@ model ServiceConnection {
   state           String
   pincode         String
   sanctionedLoad  Float?           // For electricity (in kW)
+  loadType        String?          // "RESIDENTIAL", "COMMERCIAL", "INDUSTRIAL"
+  phase           String?          // "SINGLE", "THREE" - for electricity
   connectionDate  DateTime?
   lastReadingDate DateTime?
   lastReading     Float?
@@ -376,4 +378,54 @@ model KioskLog {
 
   @@index([kioskId])
   @@index([createdAt])
+}
+
+// ============================================
+// ELECTRICITY TARIFF MANAGEMENT
+// ============================================
+
+model Tariff {
+  id          String      @id @default(cuid())
+  serviceType ServiceType
+  loadType    String      // "RESIDENTIAL", "COMMERCIAL", "INDUSTRIAL"
+  slabStart   Float       // Units from (e.g., 0)
+  slabEnd     Float?      // Units to (e.g., 100, null for unlimited)
+  ratePerUnit Float       // Rate in rupees
+  fixedCharge Float       @default(0) // Monthly fixed charge
+  isActive    Boolean     @default(true)
+  validFrom   DateTime    @default(now())
+  validTo     DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([serviceType, loadType, isActive])
+}
+
+// ============================================
+// BACKGROUND JOB QUEUE
+// ============================================
+
+enum JobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model Job {
+  id          String    @id @default(cuid())
+  type        String    // "GENERATE_BILLS", "SEND_NOTIFICATIONS", etc.
+  payload     Json?     // Job-specific data
+  status      JobStatus @default(PENDING)
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(3)
+  error       String?
+  scheduledAt DateTime  @default(now())
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([status, scheduledAt])
+  @@index([type])
 }
