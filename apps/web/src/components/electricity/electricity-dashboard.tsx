@@ -17,6 +17,10 @@ import {
     Plus
 } from "lucide-react";
 import { useAuthStore } from "@/lib/store/auth";
+import { DownloadBillBtn } from "./download-bill-btn";
+import { ConsumptionChart } from "./consumption-chart";
+import { RechargeMeter } from "./recharge-meter";
+import { OutageReportForm } from "./outage-report-form";
 
 interface Connection {
     id: string;
@@ -47,6 +51,11 @@ export function ElectricityDashboard() {
     const [bills, setBills] = useState<Bill[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string>("");
+
+    const [showRecharge, setShowRecharge] = useState(false);
+    const [showOutageReport, setShowOutageReport] = useState(false);
+    // Mock balance state for demo
+    const [prepaidBalance, setPrepaidBalance] = useState(245.50);
 
     useEffect(() => {
         if (!isAuthenticated) {
@@ -145,180 +154,230 @@ export function ElectricityDashboard() {
             </header>
 
             <div className="max-w-4xl mx-auto px-6 py-6">
-                {/* Pending Bills Alert */}
-                {pendingBills.length > 0 && (
-                    <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 flex items-start gap-3">
-                        <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5" />
-                        <div className="flex-1">
-                            <p className="font-medium text-amber-800">
-                                {pendingBills.length} pending bill{pendingBills.length > 1 ? "s" : ""}
-                            </p>
-                            <p className="text-sm text-amber-700">
-                                Total: ₹{pendingBills.reduce((sum, b) => sum + b.amount, 0).toLocaleString()}
-                            </p>
-                        </div>
-                        <Link href="/bills">
-                            <Button size="sm" variant="cta">Pay Now</Button>
-                        </Link>
+
+                {/* Feature Toggles / Active View */}
+                {showRecharge && connection ? (
+                    <div className="mb-6">
+                        <Button
+                            variant="ghost"
+                            className="mb-4 pl-0"
+                            onClick={() => setShowRecharge(false)}
+                        >
+                            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard
+                        </Button>
+                        <RechargeMeter
+                            connectionId={connection.id}
+                            meterNo={connection.connectionNo} // Use connectionNo as meterNo for demo
+                            currentBalance={prepaidBalance}
+                            onRechargeComplete={(amount) => {
+                                setPrepaidBalance(prev => prev + amount);
+                                setTimeout(() => setShowRecharge(false), 2000);
+                            }}
+                        />
                     </div>
-                )}
-
-                {/* Quick Actions */}
-                <section className="mb-8">
-                    <h2 className="font-heading text-lg text-primary mb-4">Quick Actions</h2>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        <Link
-                            href="/bills"
-                            className="kiosk-card flex flex-col items-center text-center p-4 hover:border-cta border-2 border-transparent"
-                        >
-                            <div className="w-10 h-10 bg-electricity-light rounded-lg flex items-center justify-center mb-2">
-                                <FileText className="w-5 h-5 text-electricity" />
-                            </div>
-                            <span className="text-sm font-medium text-primary">Pay Bills</span>
-                        </Link>
-
-                        <Link
-                            href={`/services/electricity/meter-reading`}
-                            className="kiosk-card flex flex-col items-center text-center p-4 hover:border-cta border-2 border-transparent"
-                        >
-                            <div className="w-10 h-10 bg-electricity-light rounded-lg flex items-center justify-center mb-2">
-                                <Gauge className="w-5 h-5 text-electricity" />
-                            </div>
-                            <span className="text-sm font-medium text-primary">Submit Reading</span>
-                        </Link>
-
-                        <Link
-                            href="/grievances/new"
-                            className="kiosk-card flex flex-col items-center text-center p-4 hover:border-cta border-2 border-transparent"
-                        >
-                            <div className="w-10 h-10 bg-electricity-light rounded-lg flex items-center justify-center mb-2">
-                                <AlertCircle className="w-5 h-5 text-electricity" />
-                            </div>
-                            <span className="text-sm font-medium text-primary">Report Outage</span>
-                        </Link>
-
-                        <Link
-                            href="/connections/new"
-                            className="kiosk-card flex flex-col items-center text-center p-4 hover:border-cta border-2 border-transparent"
-                        >
-                            <div className="w-10 h-10 bg-electricity-light rounded-lg flex items-center justify-center mb-2">
-                                <Plus className="w-5 h-5 text-electricity" />
-                            </div>
-                            <span className="text-sm font-medium text-primary">New Connection</span>
-                        </Link>
-                    </div>
-                </section>
-
-                {/* My Connections */}
-                <section>
-                    <div className="flex items-center justify-between mb-4">
-                        <h2 className="font-heading text-lg text-primary">My Connections</h2>
-                        <Link href="/connections/new">
-                            <Button variant="outline" size="sm">
-                                <Plus className="w-4 h-4 mr-2" />
-                                New Connection
+                ) : showOutageReport && connection ? (
+                    <div className="mb-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <Button
+                                variant="ghost"
+                                className="pl-0"
+                                onClick={() => setShowOutageReport(false)}
+                            >
+                                <ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard
                             </Button>
-                        </Link>
-                    </div>
-
-                    {error ? (
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Error Loading Data</CardTitle>
-                                <CardDescription>{error}</CardDescription>
-                            </CardHeader>
-                        </Card>
-                    ) : !connection ? (
-                        <div className="text-center py-8">
-                            <Zap className="w-12 h-12 mx-auto text-slate-300 mb-4" />
-                            <p className="text-muted-foreground mb-4">No electricity connections yet</p>
-                            <Link href="/connections/new">
-                                <Button variant="cta">Apply for New Connection</Button>
-                            </Link>
                         </div>
-                    ) : (
-                        <div className="space-y-3">
-                            <div className="kiosk-card flex flex-col md:flex-row md:items-center gap-4">
-                                <div className="w-12 h-12 bg-electricity-light rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <Zap className="w-6 h-6 text-electricity" />
-                                </div>
+                        <OutageReportForm
+                            connectionId={connection.id}
+                            onSuccess={() => setTimeout(() => setShowOutageReport(false), 2000)}
+                        />
+                    </div>
+                ) : (
+                    <>
+                        {/* Pending Bills Alert */}
+                        {pendingBills.length > 0 && (
+                            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 flex items-start gap-3">
+                                <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5" />
                                 <div className="flex-1">
-                                    <p className="font-medium text-primary">
-                                        Connection: {connection.connectionNo}
+                                    <p className="font-medium text-amber-800">
+                                        {pendingBills.length} pending bill{pendingBills.length > 1 ? "s" : ""}
                                     </p>
-                                    <p className="text-sm text-muted-foreground">{connection.address}</p>
-                                    <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
-                                        <span>Load: {connection.loadType}</span>
-                                        <span>Phase: {connection.phase}</span>
-                                        <span>Sanctioned: {connection.sanctionedLoad} kW</span>
-                                    </div>
+                                    <p className="text-sm text-amber-700">
+                                        Total: ₹{pendingBills.reduce((sum, b) => sum + b.amount, 0).toLocaleString()}
+                                    </p>
                                 </div>
-                                <div className="flex items-center gap-4">
-                                    {connection.lastReading && (
-                                        <div className="text-right">
-                                            <p className="text-sm text-muted-foreground">Last Reading</p>
-                                            <p className="font-medium">{connection.lastReading} units</p>
+                                <Link href="/bills">
+                                    <Button size="sm" variant="cta">Pay Now</Button>
+                                </Link>
+                            </div>
+                        )}
+
+                        {/* Quick Actions */}
+                        <section className="mb-8">
+                            <h2 className="font-heading text-lg text-primary mb-4">Quick Actions</h2>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                <Link
+                                    href="/bills"
+                                    className="kiosk-card flex flex-col items-center text-center p-4 hover:border-cta border-2 border-transparent"
+                                >
+                                    <div className="w-10 h-10 bg-electricity-light rounded-lg flex items-center justify-center mb-2">
+                                        <FileText className="w-5 h-5 text-electricity" />
+                                    </div>
+                                    <span className="text-sm font-medium text-primary">Pay Bills</span>
+                                </Link>
+
+                                <div
+                                    onClick={() => setShowRecharge(true)}
+                                    className="kiosk-card flex flex-col items-center text-center p-4 hover:border-cta border-2 border-transparent cursor-pointer"
+                                >
+                                    <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mb-2">
+                                        <TrendingUp className="w-5 h-5 text-green-600" />
+                                    </div>
+                                    <span className="text-sm font-medium text-primary">Recharge</span>
+                                </div>
+
+                                <Link
+                                    href={`/services/electricity/meter-reading`}
+                                    className="kiosk-card flex flex-col items-center text-center p-4 hover:border-cta border-2 border-transparent"
+                                >
+                                    <div className="w-10 h-10 bg-electricity-light rounded-lg flex items-center justify-center mb-2">
+                                        <Gauge className="w-5 h-5 text-electricity" />
+                                    </div>
+                                    <span className="text-sm font-medium text-primary">Submit Reading</span>
+                                </Link>
+
+                                <div
+                                    onClick={() => setShowOutageReport(true)}
+                                    className="kiosk-card flex flex-col items-center text-center p-4 hover:border-cta border-2 border-transparent cursor-pointer"
+                                >
+                                    <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center mb-2">
+                                        <AlertCircle className="w-5 h-5 text-red-600" />
+                                    </div>
+                                    <span className="text-sm font-medium text-primary">Report Outage</span>
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* My Connections */}
+                        <section>
+                            <div className="flex items-center justify-between mb-4">
+                                <h2 className="font-heading text-lg text-primary">My Connections</h2>
+                                <Link href="/connections/new">
+                                    <Button variant="outline" size="sm">
+                                        <Plus className="w-4 h-4 mr-2" />
+                                        New Connection
+                                    </Button>
+                                </Link>
+                            </div>
+
+                            {error ? (
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle>Error Loading Data</CardTitle>
+                                        <CardDescription>{error}</CardDescription>
+                                    </CardHeader>
+                                </Card>
+                            ) : !connection ? (
+                                <div className="text-center py-8">
+                                    <Zap className="w-12 h-12 mx-auto text-slate-300 mb-4" />
+                                    <p className="text-muted-foreground mb-4">No electricity connections yet</p>
+                                    <Link href="/connections/new">
+                                        <Button variant="cta">Apply for New Connection</Button>
+                                    </Link>
+                                </div>
+                            ) : (
+                                <div className="space-y-3">
+                                    <div className="kiosk-card flex flex-col md:flex-row md:items-center gap-4">
+                                        <div className="w-12 h-12 bg-electricity-light rounded-lg flex items-center justify-center flex-shrink-0">
+                                            <Zap className="w-6 h-6 text-electricity" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="font-medium text-primary">
+                                                Connection: {connection.connectionNo}
+                                            </p>
+                                            <p className="text-sm text-muted-foreground">{connection.address}</p>
+                                            <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
+                                                <span>Load: {connection.loadType}</span>
+                                                <span className="font-bold text-green-600">Balance: ₹{prepaidBalance.toFixed(2)}</span>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-4">
+                                            {connection.lastReading && (
+                                                <div className="text-right">
+                                                    <p className="text-sm text-muted-foreground">Last Reading</p>
+                                                    <p className="font-medium">{connection.lastReading} units</p>
+                                                </div>
+                                            )}
+                                            <Badge variant={connection.status === "ACTIVE" ? "default" : "secondary"}>
+                                                {connection.status}
+                                            </Badge>
+                                        </div>
+                                    </div>
+
+                                    {/* Consumption Chart */}
+                                    {bills.length > 0 && (
+                                        <div className="mt-6">
+                                            <ConsumptionChart bills={bills} />
                                         </div>
                                     )}
-                                    <Badge variant={connection.status === "ACTIVE" ? "default" : "secondary"}>
-                                        {connection.status}
-                                    </Badge>
-                                </div>
-                            </div>
 
-                            {/* Recent Bills */}
-                            {bills.length > 0 && (
-                                <Card className="mt-6">
-                                    <CardHeader>
-                                        <div className="flex items-center justify-between">
-                                            <CardTitle className="flex items-center gap-2">
-                                                <FileText className="h-5 w-5 text-blue-500" />
-                                                Recent Bills
-                                            </CardTitle>
-                                            <Link href="/bills">
-                                                <Button variant="outline" size="sm">View All</Button>
-                                            </Link>
-                                        </div>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <div className="space-y-2">
-                                            {bills.map((bill) => (
-                                                <div
-                                                    key={bill.billNo}
-                                                    className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent/50 transition-colors"
-                                                >
-                                                    <div className="flex-1">
-                                                        <div className="flex items-center gap-2">
-                                                            <p className="font-medium text-sm">{bill.billNo}</p>
-                                                            <Badge
-                                                                variant={
-                                                                    bill.status === "PAID"
-                                                                        ? "default"
-                                                                        : bill.status === "PENDING"
-                                                                            ? "destructive"
-                                                                            : "secondary"
-                                                                }
-                                                                className="text-xs"
-                                                            >
-                                                                {bill.status}
-                                                            </Badge>
-                                                        </div>
-                                                        <p className="text-xs text-muted-foreground mt-1">
-                                                            {new Date(bill.periodFrom).toLocaleDateString()} - {new Date(bill.periodTo).toLocaleDateString()} • {bill.unitsConsumed} units
-                                                        </p>
-                                                    </div>
-                                                    <div className="text-right">
-                                                        <p className="font-bold text-lg">₹{bill.amount}</p>
-                                                    </div>
+                                    {/* Recent Bills */}
+                                    {bills.length > 0 && (
+                                        <Card className="mt-6">
+                                            <CardHeader>
+                                                <div className="flex items-center justify-between">
+                                                    <CardTitle className="flex items-center gap-2">
+                                                        <FileText className="h-5 w-5 text-blue-500" />
+                                                        Recent Bills
+                                                    </CardTitle>
+                                                    <Link href="/bills">
+                                                        <Button variant="outline" size="sm">View All</Button>
+                                                    </Link>
                                                 </div>
-                                            ))}
-                                        </div>
-                                    </CardContent>
-                                </Card>
+                                            </CardHeader>
+                                            <CardContent>
+                                                <div className="space-y-2">
+                                                    {bills.map((bill) => (
+                                                        <div
+                                                            key={bill.billNo}
+                                                            className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent/50 transition-colors"
+                                                        >
+                                                            <div className="flex-1">
+                                                                <div className="flex items-center gap-2">
+                                                                    <p className="font-medium text-sm">{bill.billNo}</p>
+                                                                    <Badge
+                                                                        variant={
+                                                                            bill.status === "PAID"
+                                                                                ? "default"
+                                                                                : bill.status === "PENDING"
+                                                                                    ? "destructive"
+                                                                                    : "secondary"
+                                                                        }
+                                                                        className="text-xs"
+                                                                    >
+                                                                        {bill.status}
+                                                                    </Badge>
+                                                                </div>
+                                                                <p className="text-xs text-muted-foreground mt-1">
+                                                                    {new Date(bill.periodFrom).toLocaleDateString()} - {new Date(bill.periodTo).toLocaleDateString()} • {bill.unitsConsumed} units
+                                                                </p>
+                                                            </div>
+                                                            <div className="flex items-center gap-4">
+                                                                <div className="text-right">
+                                                                    <p className="font-bold text-lg">₹{bill.amount}</p>
+                                                                </div>
+                                                                <DownloadBillBtn bill={bill} connection={connection} />
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    )}
+                                </div>
                             )}
-                        </div>
-                    )}
-                </section>
+                        </section>
+                    </>
+                )}
             </div>
         </div>
     );

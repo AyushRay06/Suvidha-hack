@@ -67,11 +67,18 @@ async function main() {
     }),
     prisma.serviceConnection.upsert({
       where: { connectionNo: "GAS-2024-009012" },
-      update: {},
+      update: {
+        provider: "INDANE",
+        agency: "Assam Gas Agency",
+        cylinders: 1,
+      },
       create: {
         userId: user.id,
         serviceType: "GAS",
         connectionNo: "GAS-2024-009012",
+        provider: "INDANE",
+        agency: "Assam Gas Agency",
+        cylinders: 1,
         address: "123 Gandhi Road",
         city: "New Delhi",
         state: "Delhi",

@@ -104,6 +104,7 @@ model User {
   payments      Payment[]
   grievances    Grievance[]
   notifications Notification[]
+  gasBookings   GasBooking[]
   documents     Document[]
   sessions      Session[]
 
@@ -144,6 +145,10 @@ model ServiceConnection {
   sanctionedLoad  Float?           // For electricity (in kW)
   loadType        String?          // "RESIDENTIAL", "COMMERCIAL", "INDUSTRIAL"
   phase           String?          // "SINGLE", "THREE" - for electricity
+  // Gas Fields
+  provider        GasProvider?
+  agency          String?          // Gas agency name
+  cylinders       Int?             @default(1) // 1 (Single) or 2 (Double/DBC)
   connectionDate  DateTime?
   lastReadingDate DateTime?
   lastReading     Float?
@@ -154,6 +159,7 @@ model ServiceConnection {
   bills        Bill[]
   meterReadings MeterReading[]
   grievances   Grievance[]
+  gasBookings  GasBooking[]
 
   @@index([userId])
   @@index([connectionNo])
@@ -428,4 +434,45 @@ model Job {
 
   @@index([status, scheduledAt])
   @@index([type])
+}
+
+// ============================================
+// GAS SERVICE
+// ============================================
+
+enum GasProvider {
+  INDANE
+  HP_GAS
+  BHARAT_GAS
+}
+
+enum BookingStatus {
+  BOOKED
+  DISPATCHED
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+  FAILED
+}
+
+model GasBooking {
+  id              String        @id @default(cuid())
+  userId          String
+  connectionId    String
+  bookingId       String        @unique // e.g., GAS-2024-XXX
+  bookingDate     DateTime      @default(now())
+  status          BookingStatus @default(BOOKED)
+  deliveryDate    DateTime?
+  amount          Float
+  subsidyAmount   Float?        @default(0)
+  otp             String?       // Delivery OTP
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  connection ServiceConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([connectionId])
+  @@index([status])
 }

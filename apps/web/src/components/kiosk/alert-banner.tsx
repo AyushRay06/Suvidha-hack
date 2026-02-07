@@ -23,13 +23,15 @@ export function AlertBanner() {
     // Fetch system alerts
     const fetchAlerts = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/notifications/alerts`);
+        const url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/notifications/alerts`;
+        const res = await fetch(url);
         if (res.ok) {
           const data = await res.json();
           setAlerts(data.data || []);
         }
       } catch (error) {
-        console.error("Failed to fetch alerts:", error);
+        // Silently fail for network errors during dev/startup
+        console.warn("Could not fetch alerts (backend might be starting):", error);
       }
     };
 

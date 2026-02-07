@@ -98,7 +98,8 @@ export default function ServicePage() {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      router.push("/auth/login");
+      const returnUrl = encodeURIComponent(`/services/${serviceType}`);
+      router.push(`/auth/login?returnUrl=${returnUrl}`);
       return;
     }
     if (!config) {

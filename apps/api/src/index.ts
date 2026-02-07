@@ -16,6 +16,9 @@ import notificationRoutes from './modules/notification/routes';
 import adminRoutes from './modules/admin/routes';
 import electricityRoutes from './modules/electricity/routes';
 import electricityAdminRoutes from './modules/electricity/admin.routes';
+import gasRoutes from './modules/gas/routes';
+
+// ...
 
 // Import middleware
 import { errorHandler } from './middleware/errorHandler';
@@ -64,6 +67,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/electricity', electricityRoutes);
 app.use('/api/admin/electricity', electricityAdminRoutes);
+app.use('/api/gas', gasRoutes);
 
 // Error handling
 app.use(errorHandler);
