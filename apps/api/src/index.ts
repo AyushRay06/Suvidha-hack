@@ -17,8 +17,12 @@ import adminRoutes from './modules/admin/routes';
 import electricityRoutes from './modules/electricity/routes';
 import electricityAdminRoutes from './modules/electricity/admin.routes';
 import gasRoutes from './modules/gas/routes';
+import waterRoutes from './modules/water/routes';
+import municipalRoutes from './modules/municipal/routes';
+import uploadRoutes from './modules/upload/routes';
 
 // ...
+
 
 // Import middleware
 import { errorHandler } from './middleware/errorHandler';
@@ -68,6 +72,10 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/electricity', electricityRoutes);
 app.use('/api/admin/electricity', electricityAdminRoutes);
 app.use('/api/gas', gasRoutes);
+app.use('/api/water', waterRoutes);
+app.use('/api/municipal', municipalRoutes);
+app.use('/api/upload', uploadRoutes);
+
 
 // Error handling
 app.use(errorHandler);

@@ -99,14 +99,16 @@ model User {
   updatedAt     DateTime  @updatedAt
 
   // Relations
-  connections   ServiceConnection[]
-  bills         Bill[]
-  payments      Payment[]
-  grievances    Grievance[]
-  notifications Notification[]
-  gasBookings   GasBooking[]
-  documents     Document[]
-  sessions      Session[]
+  connections     ServiceConnection[]
+  bills           Bill[]
+  payments        Payment[]
+  grievances      Grievance[]
+  notifications   Notification[]
+  gasBookings     GasBooking[]
+  documents       Document[]
+  sessions        Session[]
+  properties      Property[]
+  civicComplaints CivicComplaint[]
 
   @@index([phone])
   @@index([email])
@@ -474,5 +476,106 @@ model GasBooking {
 
   @@index([userId])
   @@index([connectionId])
+  @@index([status])
+}
+
+// ============================================
+// MUNICIPAL SERVICE
+// ============================================
+
+enum PropertyType {
+  RESIDENTIAL
+  COMMERCIAL
+  INDUSTRIAL
+  AGRICULTURAL
+}
+
+enum ComplaintCategory {
+  STREETLIGHT
+  ROAD_REPAIR
+  DRAINAGE
+  SANITATION
+  WATER_SUPPLY
+  GARBAGE
+  OTHER
+}
+
+enum ComplaintStatus {
+  OPEN
+  ASSIGNED
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+model Property {
+  id            String       @id @default(cuid())
+  userId        String
+  propertyId    String       @unique // e.g., PROP-GHY-2024-001
+  propertyType  PropertyType @default(RESIDENTIAL)
+  address       String
+  ward          String?      // Ward number
+  area          Float        // Area in sq ft
+  city          String
+  state         String
+  pincode       String
+  isVerified    Boolean      @default(false)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  taxRecords   PropertyTax[]
+
+  @@index([userId])
+  @@index([propertyId])
+}
+
+model PropertyTax {
+  id            String     @id @default(cuid())
+  propertyId    String
+  financialYear String     // e.g., "2024-25"
+  baseAmount    Float      // Calculated tax
+  surcharge     Float      @default(0)
+  discount      Float      @default(0)  // Early payment discount
+  totalAmount   Float
+  amountPaid    Float      @default(0)
+  status        BillStatus @default(UNPAID)
+  dueDate       DateTime
+  paidAt        DateTime?
+  receiptNo     String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@unique([propertyId, financialYear])
+  @@index([propertyId])
+  @@index([status])
+}
+
+model CivicComplaint {
+  id            String            @id @default(cuid())
+  userId        String
+  complaintNo   String            @unique // e.g., CMP-2024-001234
+  category      ComplaintCategory
+  subject       String
+  description   String
+  location      String            // Address or landmark
+  latitude      Float?
+  longitude     Float?
+  imageUrl      String?
+  priority      GrievancePriority @default(MEDIUM)
+  status        ComplaintStatus   @default(OPEN)
+  assignedTo    String?           // Staff ID
+  resolvedAt    DateTime?
+  resolution    String?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([complaintNo])
+  @@index([category])
   @@index([status])
 }

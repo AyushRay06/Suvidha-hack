@@ -44,11 +44,45 @@ Cross-cutting fixes to ensure a smooth "kiosk" experience.
 
 ---
 
+## 💧 Water Module
+A complete water utility management system following the established premium design patterns.
+
+- **Premium Dashboard**: Quick Actions for Bill Payment, Submit Reading, Report Leakage, and New Connection.
+- **Meter Reading Workflow**: Kiosk-style form with real-time bill estimation using slab-based tariffs.
+- **Consumption Charts**: Interactive visualizations of water usage over time.
+- **Tariff System**: Slab-based pricing (₹5-15/kL domestic, ₹15-35/kL commercial) with fixed charges and 15% sewerage fees.
+- **PDF Bill Download**: Client-side bill generation using jsPDF.
+
+---
+
+## 🏛️ Municipal Services Module
+A new module for civic services and property tax management.
+
+- **Property Tax Management**: View registered properties, tax assessment records, and payment status.
+- **Civic Complaints System**: File complaints for Streetlight, Road Repair, Drainage, Sanitation, Garbage, and Water Supply issues.
+- **Waste Collection Schedule**: View pickup schedules by ward with day and time information.
+- **Quick Actions Grid**: 6 premium action buttons (Property Tax, Waste Issue, Streetlight, Road Repair, Drainage, Support).
+- **Database Models**: Added `Property`, `PropertyTax`, and `CivicComplaint` models.
+
+---
+
+## 📸 Photo Upload & Universal Grievance
+Enhanced complaint filing with photo attachments across all services.
+
+- **Upload API**: Base64 image upload endpoint (`/api/upload/image`) supporting JPEG, PNG, GIF, WebP with 5MB limit.
+- **Photo Attachments**: Both Municipal ComplaintForm and grievances/new page now support photo uploads.
+- **Universal Grievance Form**: Single form at `/grievances/new` supports all 4 services (Electricity, Gas, Water, Municipal).
+- **Visual Feedback**: Image preview, upload progress overlay, remove button, and "Uploaded" indicator.
+
+---
+
 ## 🛠️ Infrastructure & Data
 - **Database Transition**: Migrated the development environment to SQLite to remove PostgreSQL dependencies and simplify local setup.
 - **Schema Enrichment**: Expanded the `ServiceConnection` model to support Utility Agencies and more granular connection details.
-- **Realistic Seeding**: Updated the seeding scripts to provide a "filled" demo experience with valid connection numbers, diverse agencies, and pre-populated billing history.
+- **Municipal Schema**: Added Property, PropertyTax, CivicComplaint models with enums for property types and complaint categories.
+- **Realistic Seeding**: Updated seeding scripts with demo properties, tax records, and sample civic complaints.
 
 ---
 
 *Updated on: 2026-02-07*
+

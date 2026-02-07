@@ -20,6 +20,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/lib/store/auth";
 import { ElectricityDashboard } from "@/components/electricity/electricity-dashboard";
+import { GasDashboard } from "@/components/gas/gas-dashboard";
+import { WaterDashboard } from "@/components/water/water-dashboard";
+import { MunicipalDashboard } from "@/components/municipal/municipal-dashboard";
 
 
 interface Connection {
@@ -141,9 +144,18 @@ export default function ServicePage() {
 
   if (!config || !isAuthenticated) return null;
 
-  // Use dedicated Electricity Dashboard for electricity service
+  // Use dedicated dashboards for each service
   if (serviceType?.toLowerCase() === 'electricity') {
     return <ElectricityDashboard />;
+  }
+  if (serviceType?.toLowerCase() === 'gas') {
+    return <GasDashboard />;
+  }
+  if (serviceType?.toLowerCase() === 'water') {
+    return <WaterDashboard />;
+  }
+  if (serviceType?.toLowerCase() === 'municipal') {
+    return <MunicipalDashboard />;
   }
 
   const Icon = config.icon;

@@ -51,18 +51,25 @@ async function main() {
     }),
     prisma.serviceConnection.upsert({
       where: { connectionNo: "WATER-2024-005678" },
-      update: {},
+      update: {
+        loadType: "DOMESTIC",
+        lastReading: 45,
+        lastReadingDate: new Date("2024-01-25"),
+      },
       create: {
         userId: user.id,
         serviceType: "WATER",
         connectionNo: "WATER-2024-005678",
         meterNo: "WTR-54321",
         address: "123 Gandhi Road",
-        city: "New Delhi",
-        state: "Delhi",
-        pincode: "110001",
+        city: "Guwahati",
+        state: "Assam",
+        pincode: "781001",
         status: "ACTIVE",
         connectionDate: new Date("2023-02-20"),
+        loadType: "DOMESTIC",
+        lastReading: 45,
+        lastReadingDate: new Date("2024-01-25"),
       },
     }),
     prisma.serviceConnection.upsert({
@@ -180,6 +187,65 @@ async function main() {
     },
   });
   console.log(`✅ Created grievance: ${grievance.ticketNo}`);
+
+  // Create demo property for municipal services
+  const property = await prisma.property.upsert({
+    where: { propertyId: "PROP-GHY-2024-001" },
+    update: {},
+    create: {
+      userId: user.id,
+      propertyId: "PROP-GHY-2024-001",
+      propertyType: "RESIDENTIAL",
+      address: "123 Gandhi Road, Lakhimi Nagar",
+      ward: "Ward 15",
+      area: 1200,
+      city: "Guwahati",
+      state: "Assam",
+      pincode: "781001",
+      isVerified: true,
+    },
+  });
+
+  // Create property tax record for current financial year
+  await prisma.propertyTax.upsert({
+    where: {
+      propertyId_financialYear: {
+        propertyId: property.id,
+        financialYear: "2024-25",
+      },
+    },
+    update: {},
+    create: {
+      propertyId: property.id,
+      financialYear: "2024-25",
+      baseAmount: 2400,
+      surcharge: 100,
+      discount: 0,
+      totalAmount: 2500,
+      amountPaid: 0,
+      status: "UNPAID",
+      dueDate: new Date("2025-03-31"),
+    },
+  });
+  console.log(`✅ Created property: ${property.propertyId}`);
+
+  // Create demo civic complaint
+  const complaint = await prisma.civicComplaint.upsert({
+    where: { complaintNo: "CMP-2024-000001" },
+    update: {},
+    create: {
+      userId: user.id,
+      complaintNo: "CMP-2024-000001",
+      category: "STREETLIGHT",
+      subject: "Streetlight not working near Gandhi Road",
+      description: "The streetlight outside house #123 on Gandhi Road has not been working for the past 3 days.",
+      location: "Gandhi Road, Near Lakhimi Nagar Junction",
+      priority: "MEDIUM",
+      status: "OPEN",
+    },
+  });
+  console.log(`✅ Created civic complaint: ${complaint.complaintNo}`);
+
 
   // Create notifications
   await prisma.notification.createMany({

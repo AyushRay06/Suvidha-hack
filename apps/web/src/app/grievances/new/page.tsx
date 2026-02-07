@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
@@ -13,6 +13,8 @@ import {
   Upload,
   Loader2,
   CheckCircle,
+  Camera,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -67,10 +69,14 @@ export default function NewGrievancePage() {
   const router = useRouter();
   const { toast } = useToast();
   const { isAuthenticated, tokens } = useAuthStore();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
-  
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+
   const [formData, setFormData] = useState({
     serviceType: "",
     category: "",
@@ -87,6 +93,67 @@ export default function NewGrievancePage() {
     { id: "WATER", name: "Water", icon: Droplets, color: "bg-water-light text-water" },
     { id: "MUNICIPAL", name: "Municipal", icon: Building2, color: "bg-municipal-light text-municipal" },
   ];
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.match(/^image\/(jpeg|jpg|png|gif|webp)$/)) {
+      toast({ title: "Invalid file", description: "Please select JPEG, PNG, GIF or WebP", variant: "destructive" });
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "File too large", description: "Image must be less than 5MB", variant: "destructive" });
+      return;
+    }
+
+    setUploading(true);
+
+    try {
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        const base64 = event.target?.result as string;
+        setImagePreview(base64);
+
+        const base64Data = base64.split(',')[1];
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+        const response = await fetch(`${apiUrl}/api/upload/image`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${tokens?.accessToken}`,
+          },
+          body: JSON.stringify({
+            filename: file.name,
+            contentType: file.type,
+            base64Data,
+          }),
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          setImageUrl(data.data.url);
+          toast({ title: "Photo uploaded", description: "Image attached successfully" });
+        } else {
+          throw new Error(data.error || 'Upload failed');
+        }
+        setUploading(false);
+      };
+      reader.readAsDataURL(file);
+    } catch (err: any) {
+      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
+      setImagePreview(null);
+      setUploading(false);
+    }
+  };
+
+  const removeImage = () => {
+    setImageUrl(null);
+    setImagePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -205,11 +272,10 @@ export default function NewGrievancePage() {
                 key={svc.id}
                 type="button"
                 onClick={() => setFormData({ ...formData, serviceType: svc.id, category: "" })}
-                className={`p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all cursor-pointer ${
-                  formData.serviceType === svc.id
-                    ? "border-cta bg-cta/5"
-                    : "border-slate-200 hover:border-cta/50"
-                }`}
+                className={`p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all cursor-pointer ${formData.serviceType === svc.id
+                  ? "border-cta bg-cta/5"
+                  : "border-slate-200 hover:border-cta/50"
+                  }`}
               >
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${svc.color}`}>
                   <svc.icon className="w-5 h-5" />
@@ -230,11 +296,10 @@ export default function NewGrievancePage() {
                   key={cat}
                   type="button"
                   onClick={() => setFormData({ ...formData, category: cat })}
-                  className={`px-4 py-2 rounded-lg text-sm transition-colors cursor-pointer ${
-                    formData.category === cat
-                      ? "bg-cta text-white"
-                      : "bg-white border border-slate-200 hover:border-cta"
-                  }`}
+                  className={`px-4 py-2 rounded-lg text-sm transition-colors cursor-pointer ${formData.category === cat
+                    ? "bg-cta text-white"
+                    : "bg-white border border-slate-200 hover:border-cta"
+                    }`}
                 >
                   {cat}
                 </button>
@@ -252,11 +317,10 @@ export default function NewGrievancePage() {
                 key={p.id}
                 type="button"
                 onClick={() => setFormData({ ...formData, priority: p.id })}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
-                  formData.priority === p.id
-                    ? `${p.color} ring-2 ring-offset-2 ring-cta/30`
-                    : "bg-white border border-slate-200 hover:border-cta"
-                }`}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${formData.priority === p.id
+                  ? `${p.color} ring-2 ring-offset-2 ring-cta/30`
+                  : "bg-white border border-slate-200 hover:border-cta"
+                  }`}
               >
                 {p.name}
               </button>
@@ -322,13 +386,62 @@ export default function NewGrievancePage() {
           />
         </div>
 
+        {/* Photo Upload */}
+        <div>
+          <Label className="text-base mb-3 block">Attach Photo (Optional)</Label>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/gif,image/webp"
+            onChange={handleFileSelect}
+            className="hidden"
+          />
+
+          {imagePreview ? (
+            <div className="relative rounded-xl overflow-hidden border-2 border-slate-200">
+              <img
+                src={imagePreview}
+                alt="Preview"
+                className="w-full h-48 object-cover"
+              />
+              <button
+                type="button"
+                onClick={removeImage}
+                className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 shadow-lg"
+              >
+                <X className="w-4 h-4" />
+              </button>
+              {uploading && (
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                  <Loader2 className="w-8 h-8 text-white animate-spin" />
+                </div>
+              )}
+              {imageUrl && (
+                <div className="absolute bottom-2 left-2 bg-green-500 text-white text-xs px-3 py-1 rounded-full flex items-center gap-1">
+                  <CheckCircle className="w-3 h-3" /> Uploaded
+                </div>
+              )}
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="w-full border-2 border-dashed border-slate-300 rounded-xl p-6 text-center text-muted-foreground hover:border-cta hover:bg-cta/5 transition-colors cursor-pointer"
+            >
+              <Camera className="w-10 h-10 mx-auto mb-2 text-slate-400" />
+              <p className="font-medium">Click to add photo</p>
+              <p className="text-sm mt-1">JPEG, PNG, GIF or WebP (max 5MB)</p>
+            </button>
+          )}
+        </div>
+
         {/* Submit */}
         <Button
           type="submit"
           variant="cta"
           size="xl"
           className="w-full"
-          disabled={loading || !formData.serviceType || !formData.category || !formData.subject || !formData.description}
+          disabled={loading || uploading || !formData.serviceType || !formData.category || !formData.subject || !formData.description}
         >
           {loading ? (
             <>
@@ -343,3 +456,4 @@ export default function NewGrievancePage() {
     </div>
   );
 }
+
