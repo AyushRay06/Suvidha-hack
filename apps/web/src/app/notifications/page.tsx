@@ -127,7 +127,7 @@ export default function NotificationsPage() {
             <div>
               <h1 className="font-heading text-xl font-bold">{t("actions.notifications")}</h1>
               <p className="text-white/80 text-sm">
-                {unreadCount > 0 ? `${unreadCount} unread` : "All caught up!"}
+                {unreadCount > 0 ? t("notifications.unread", { count: unreadCount }) : t("notifications.allCaughtUp")}
               </p>
             </div>
           </div>
@@ -138,7 +138,7 @@ export default function NotificationsPage() {
               onClick={markAllAsRead}
               className="text-white hover:bg-white/10"
             >
-              Mark all read
+              {t("notifications.markAllRead")}
             </Button>
           )}
         </div>
@@ -214,7 +214,7 @@ export default function NotificationsPage() {
         ) : (
           <div className="text-center py-12">
             <Bell className="w-12 h-12 mx-auto text-slate-300 mb-4" />
-            <p className="text-muted-foreground">No notifications yet</p>
+            <p className="text-muted-foreground">{t("notifications.noNotifications")}</p>
           </div>
         )}
       </div>

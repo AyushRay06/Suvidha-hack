@@ -190,7 +190,7 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="bg-slate-100 py-6 px-8 mt-12">
         <div className="max-w-6xl mx-auto text-center text-muted-foreground text-sm">
-          <p>© 2026 SUVIDHA Kiosk • C-DAC Smart City Initiative</p>
+          <p>{t("footer.copyright")}</p>
           <p className="mt-1">
             {t("footer.helpline")}: 1800-XXX-XXXX
           </p>

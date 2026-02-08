@@ -95,7 +95,7 @@ export default function BillsPage() {
           </Link>
           <div>
             <h1 className="font-heading text-xl font-bold">{t("bills.title")}</h1>
-            <p className="text-white/80 text-sm">View and pay your bills</p>
+            <p className="text-white/80 text-sm">{t("bills.subtitle")}</p>
           </div>
         </div>
       </header>
@@ -104,11 +104,11 @@ export default function BillsPage() {
         {/* Total Outstanding */}
         {totalUnpaid > 0 && (
           <div className="bg-gradient-to-r from-primary to-secondary rounded-xl p-6 text-white mb-6">
-            <p className="text-white/80 text-sm">Total Outstanding</p>
+            <p className="text-white/80 text-sm">{t("bills.totalOutstanding")}</p>
             <p className="font-heading text-3xl font-bold">₹{totalUnpaid.toLocaleString()}</p>
             <Button variant="cta" className="mt-4">
               <CreditCard className="w-4 h-4 mr-2" />
-              Pay All Bills
+              {t("bills.payAllBills")}
             </Button>
           </div>
         )}
@@ -125,7 +125,7 @@ export default function BillsPage() {
                   : "bg-white border border-slate-200 text-slate-600 hover:border-cta"
               }`}
             >
-              {f === "ALL" ? "All Bills" : f}
+              {f === "ALL" ? t("bills.allBills") : f === "UNPAID" ? t("bills.unpaid") : t("bills.paid")}
               {f === "UNPAID" && bills.filter((b) => b.status === "UNPAID").length > 0 && (
                 <span className="ml-2 bg-white/20 px-1.5 py-0.5 rounded text-xs">
                   {bills.filter((b) => b.status === "UNPAID" || b.status === "OVERDUE").length}
@@ -172,7 +172,7 @@ export default function BillsPage() {
                     <div className="text-right">
                       <p className="font-bold text-xl text-primary">₹{bill.amount.toLocaleString()}</p>
                       <p className="text-xs text-muted-foreground">
-                        Due: {new Date(bill.dueDate).toLocaleDateString()}
+                        {t("bills.due")}: {new Date(bill.dueDate).toLocaleDateString()}
                       </p>
                     </div>
 

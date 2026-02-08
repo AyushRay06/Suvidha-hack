@@ -170,7 +170,7 @@ export default function RegisterPage() {
             <p className="text-muted-foreground">
               {step === "phone" && t("auth.enterPhone")}
               {step === "otp" && t("auth.enterOtp")}
-              {step === "details" && "Enter your details"}
+              {step === "details" && t("form.enterDetails")}
             </p>
 
             {/* Step indicator */}
@@ -260,10 +260,10 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="address" className="text-base">Address</Label>
+                <Label htmlFor="address" className="text-base">{t("form.address")}</Label>
                 <Input
                   id="address"
-                  placeholder="Full Address"
+                  placeholder={t("form.fullAddress")}
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                 />
@@ -271,16 +271,16 @@ export default function RegisterPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="city" className="text-base">City</Label>
+                  <Label htmlFor="city" className="text-base">{t("form.city")}</Label>
                   <Input
                     id="city"
-                    placeholder="City"
+                    placeholder={t("form.city")}
                     value={formData.city}
                     onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="pincode" className="text-base">Pincode</Label>
+                  <Label htmlFor="pincode" className="text-base">{t("form.pincode")}</Label>
                   <Input
                     id="pincode"
                     placeholder="123456"

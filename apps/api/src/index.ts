@@ -3,9 +3,18 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
+import path from 'path';
 
-// Load environment variables
-dotenv.config();
+// Load environment variables - try multiple paths for monorepo compatibility
+const envPath = path.join(process.cwd(), 'apps', 'api', '.env');
+const localEnvPath = path.resolve(__dirname, '../.env');
+const result1 = dotenv.config({ path: envPath });
+const result2 = dotenv.config({ path: localEnvPath });
+
+// Debug: Log env loading status
+console.log(`[ENV] Trying path: ${envPath}, loaded: ${!result1.error}`);
+console.log(`[ENV] Trying path: ${localEnvPath}, loaded: ${!result2.error}`);
+console.log(`[ENV] FAST2SMS_API_KEY set: ${!!process.env.FAST2SMS_API_KEY}`);
 
 // Import routes
 import authRoutes from './modules/auth/routes';

@@ -41,7 +41,41 @@ const generateOtp = (): string => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
-// Send OTP (mock implementation)
+// Send SMS via Fast2SMS
+const sendSmsOtp = async (phone: string, otp: string): Promise<boolean> => {
+  try {
+    // Using TextBelt free tier - 1 free SMS per day, no signup required
+    const response = await fetch('https://textbelt.com/text', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        phone: `+91${phone}`,  // Indian phone with country code
+        message: `Your SUVIDHA verification code is: ${otp}. Valid for 5 minutes.`,
+        key: 'textbelt',  // Free tier key
+      }),
+    });
+
+    const data = await response.json() as { success: boolean; quotaRemaining?: number; error?: string };
+    
+    if (data.success) {
+      console.log(`[SMS SENT] OTP sent to +91${phone} (TextBelt free tier)`);
+      return true;
+    } else {
+      // TextBelt free quota exhausted - fallback to mock
+      console.log(`[TEXTBELT] ${data.error || 'Daily quota exhausted'}`);
+      console.log(`[MOCK SMS] OTP for ${phone}: ${otp}`);
+      return false;
+    }
+  } catch (error) {
+    console.error('[SMS ERROR]', error);
+    console.log(`[MOCK SMS] OTP for ${phone}: ${otp}`);
+    return false;
+  }
+};
+
+// Send OTP
 router.post('/send-otp', async (req, res, next) => {
   try {
     const { phone } = sendOtpSchema.parse(req.body);
@@ -53,14 +87,15 @@ router.post('/send-otp', async (req, res, next) => {
     // Store OTP (in production, use Redis)
     otpStore.set(phone, { otp, expiresAt });
     
-    // In production, send OTP via SMS
-    console.log(`[MOCK SMS] OTP for ${phone}: ${otp}`);
+    // Try to send SMS (may fail with free services)
+    const smsSent = await sendSmsOtp(phone, otp);
     
+    // For hackathon demo: always return OTP since free SMS services don't work for India
+    // In production, remove the 'otp' field and use a paid SMS gateway
     res.json({
       success: true,
-      message: 'OTP sent successfully',
-      // Remove in production - only for testing
-      ...(process.env.NODE_ENV === 'development' && { otp }),
+      message: smsSent ? 'OTP sent to your phone' : 'OTP generated for demo',
+      otp,  // Always include OTP for hackathon demo
     });
   } catch (error) {
     next(error);

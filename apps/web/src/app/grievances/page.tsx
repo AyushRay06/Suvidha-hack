@@ -92,7 +92,7 @@ export default function GrievancesPage() {
             </Link>
             <div>
               <h1 className="font-heading text-xl font-bold">{t("grievance.title")}</h1>
-              <p className="text-white/80 text-sm">Track and manage complaints</p>
+              <p className="text-white/80 text-sm">{t("grievance.subtitle")}</p>
             </div>
           </div>
           <Link href="/grievances/new">
@@ -116,7 +116,7 @@ export default function GrievancesPage() {
                 : "bg-white border border-slate-200 text-slate-600 hover:border-cta"
                 }`}
             >
-              {f === "ALL" ? "All" : f === "OPEN" ? "Open" : "Resolved"}
+              {f === "ALL" ? t("grievance.all") : f === "OPEN" ? t("grievance.open") : t("grievance.resolved")}
             </button>
           ))}
         </div>

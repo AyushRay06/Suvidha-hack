@@ -122,7 +122,7 @@ export default function DashboardPage() {
       <header className="bg-primary text-white py-4 px-6">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div>
-            <p className="text-white/70 text-sm">Welcome back,</p>
+            <p className="text-white/70 text-sm">{t("dashboard.welcomeBack")}</p>
             <h1 className="font-heading text-xl font-bold">{user?.name}</h1>
           </div>
           <div className="flex items-center gap-3">
@@ -133,7 +133,7 @@ export default function DashboardPage() {
                   size="sm"
                   className="text-white hover:bg-white/10"
                 >
-                  Admin Panel
+                  {t("dashboard.adminPanel")}
                 </Button>
               </Link>
             )}
@@ -158,15 +158,15 @@ export default function DashboardPage() {
             <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5" />
             <div>
               <p className="font-medium text-amber-800">
-                You have {pendingBills.length} pending bill{pendingBills.length > 1 ? "s" : ""}
+                {t("dashboard.pendingBillsAlert", { count: pendingBills.length })}
               </p>
               <p className="text-sm text-amber-700">
-                Total: ₹{pendingBills.reduce((sum, b) => sum + b.amount, 0).toLocaleString()}
+                {t("dashboard.total")}: ₹{pendingBills.reduce((sum, b) => sum + b.amount, 0).toLocaleString()}
               </p>
             </div>
             <Link href="/bills" className="ml-auto">
               <Button size="sm" variant="cta">
-                Pay Now
+                {t("dashboard.payNow")}
               </Button>
             </Link>
           </div>
@@ -186,20 +186,16 @@ export default function DashboardPage() {
                   </div>
                   <div className="text-left">
                     <h3 className="text-xl font-bold text-white">
-                      {i18n.language === "hi"
-                        ? "बताइए आप क्या करना चाहते हैं"
-                        : "Tell me what you want to do"}
+                      {t("dashboard.tellMe")}
                     </h3>
                     <p className="text-white/80 text-sm">
-                      {i18n.language === "hi"
-                        ? "मेनू छोड़ें • बस कहें • हम आपको ले जाएंगे"
-                        : "Skip menus • Just say it • We'll take you there"}
+                      {t("dashboard.skipMenus")}
                     </p>
                   </div>
                 </div>
                 <div className="hidden md:flex items-center gap-2 text-white/70 group-hover:text-white transition-colors">
                   <span className="text-sm font-medium">
-                    {i18n.language === "hi" ? "अभी आज़माएं" : "Try Now"}
+                    {t("dashboard.tryNow")}
                   </span>
                   <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -214,7 +210,7 @@ export default function DashboardPage() {
         <section className="mb-8">
           <h2 className="font-heading text-lg text-primary mb-4 flex items-center gap-2">
             <span className="w-1 h-5 bg-cta rounded-full"></span>
-            Quick Actions
+            {t("dashboard.quickActions")}
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {quickLinks.map((link) => (
@@ -239,11 +235,11 @@ export default function DashboardPage() {
         <section className="mb-8">
           <h2 className="font-heading text-lg text-primary mb-4 flex items-center gap-2">
             <span className="w-1 h-5 bg-cta rounded-full"></span>
-            My Service Connections
+            {t("dashboard.myConnections")}
           </h2>
 
           {loading ? (
-            <div className="text-center py-8 text-muted-foreground">Loading...</div>
+            <div className="text-center py-8 text-muted-foreground">{t("common.loading")}</div>
           ) : connections.length > 0 ? (
             <div className="space-y-3">
               {connections.map((conn) => {
@@ -261,7 +257,7 @@ export default function DashboardPage() {
                     <div className="flex-1">
                       <p className="font-medium text-primary">{conn.serviceType}</p>
                       <p className="text-sm text-muted-foreground">
-                        Connection: {conn.connectionNumber}
+                        {t("dashboard.connection")}: {conn.connectionNumber}
                       </p>
                     </div>
                     <span className={`px-2 py-1 text-xs rounded-full ${conn.status === "ACTIVE" ? "bg-success/10 text-success" : "bg-slate-100 text-slate-600"
@@ -280,14 +276,14 @@ export default function DashboardPage() {
                 <div className="w-10 h-10 bg-cta/10 rounded-full flex items-center justify-center">
                   <span className="text-cta text-2xl font-light">+</span>
                 </div>
-                <span className="font-medium text-primary">Apply for New Connection</span>
+                <span className="font-medium text-primary">{t("dashboard.applyNewConnection")}</span>
               </Link>
             </div>
           ) : (
             <div className="text-center py-8">
-              <p className="text-muted-foreground mb-4">No active connections yet</p>
+              <p className="text-muted-foreground mb-4">{t("dashboard.noConnections")}</p>
               <Link href="/connections/new">
-                <Button variant="cta">Apply for New Connection</Button>
+                <Button variant="cta">{t("dashboard.applyNewConnection")}</Button>
               </Link>
             </div>
           )}
@@ -298,7 +294,7 @@ export default function DashboardPage() {
           <section>
             <h2 className="font-heading text-lg text-primary mb-4 flex items-center gap-2">
               <span className="w-1 h-5 bg-cta rounded-full"></span>
-              Pending Bills
+              {t("dashboard.pendingBills")}
             </h2>
             <div className="space-y-3">
               {pendingBills.map((bill) => {
@@ -315,12 +311,12 @@ export default function DashboardPage() {
                     <div className="flex-1">
                       <p className="font-medium text-primary">{bill.serviceType}</p>
                       <p className="text-sm text-muted-foreground">
-                        Due: {new Date(bill.dueDate).toLocaleDateString()}
+                        {t("bills.due")}: {new Date(bill.dueDate).toLocaleDateString()}
                       </p>
                     </div>
                     <p className="font-bold text-lg">₹{bill.amount.toLocaleString()}</p>
                     <Link href={`/bills/${bill.id}/pay`}>
-                      <Button size="sm" variant="cta">Pay</Button>
+                      <Button size="sm" variant="cta">{t("bills.pay")}</Button>
                     </Link>
                   </div>
                 );
