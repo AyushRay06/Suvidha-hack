@@ -178,11 +178,99 @@ const hi = {
   },
 };
 
+// Assamese translations
+const as = {
+  app: {
+    title: "সুবিধা কিয়স্ক",
+    subtitle: "একত্ৰিত নাগৰিক সেৱা",
+  },
+  home: {
+    welcome: "সুবিধালৈ আপোনাক স্বাগতম",
+    description: "এটা ঠাইৰ পৰা সকলো নাগৰিক সেৱা লাভ কৰক - বিদ্যুৎ, গেছ, পানী আৰু পৌৰসভা সেৱা।",
+    selectService: "সেৱা বাছক",
+    quickActions: "দ্ৰুত কাৰ্য",
+    loginCta: {
+      title: "ইতিমধ্যে পঞ্জীয়ন কৰিছে?",
+      description: "আপোনাৰ বিল চাবলৈ, অভিযোগ অনুসৰণ কৰিবলৈ আৰু সংযোগ পৰিচালনা কৰিবলৈ লগইন কৰক।",
+    },
+  },
+  services: {
+    electricity: "বিদ্যুৎ",
+    electricityDesc: "বিল পৰিশোধ, নতুন সংযোগ, মিটাৰ ৰিডিং",
+    gas: "গেছ",
+    gasDesc: "বিল পৰিশোধ, চিলিণ্ডাৰ বুকিং",
+    water: "পানী",
+    waterDesc: "বিল পৰিশোধ, লিকেজ ৰিপৰ্ট",
+    municipal: "পৌৰসভা",
+    municipalDesc: "আৱৰ্জনা, ৰাস্তা, ষ্ট্ৰীটলাইট",
+  },
+  actions: {
+    payBills: "বিল পৰিশোধ",
+    grievances: "অভিযোগ",
+    notifications: "সতৰ্কবাণী",
+    help: "সহায়",
+  },
+  auth: {
+    login: "লগইন",
+    register: "পঞ্জীয়ন",
+    logout: "লগআউট",
+    phone: "ফোন নম্বৰ",
+    name: "সম্পূৰ্ণ নাম",
+    email: "ইমেইল",
+    otp: "অ'টিপি",
+    sendOtp: "অ'টিপি পঠাওক",
+    verifyOtp: "অ'টিপি সত্যাপন কৰক",
+    enterPhone: "আপোনাৰ ১০ সংখ্যাৰ ফোন নম্বৰ দিয়ক",
+    enterOtp: "আপোনাৰ ফোনলৈ পঠোৱা ৬ সংখ্যাৰ অ'টিপি দিয়ক",
+    newUser: "নতুন ব্যৱহাৰকাৰী?",
+    existingUser: "ইতিমধ্যে একাউণ্ট আছে?",
+  },
+  bills: {
+    title: "মোৰ বিল",
+    noBills: "কোনো বিল পোৱা নগ'ল",
+    payNow: "এতিয়াই পৰিশোধ কৰক",
+    viewDetails: "বিৱৰণ চাওক",
+    dueDate: "পৰিশোধৰ তাৰিখ",
+    amount: "পৰিমাণ",
+    status: "স্থিতি",
+    unpaid: "পৰিশোধ হোৱা নাই",
+    paid: "পৰিশোধ কৰা হৈছে",
+    overdue: "বিলম্বিত",
+  },
+  grievance: {
+    title: "মোৰ অভিযোগ",
+    newGrievance: "নতুন অভিযোগ দাখিল কৰক",
+    category: "শ্ৰেণী",
+    subject: "বিষয়",
+    description: "বিৱৰণ",
+    priority: "অগ্ৰাধিকাৰ",
+    submit: "অভিযোগ দাখিল কৰক",
+    trackStatus: "স্থিতি অনুসৰণ কৰক",
+    noGrievances: "কোনো অভিযোগ দাখিল কৰা হোৱা নাই",
+  },
+  common: {
+    loading: "লোড হৈ আছে...",
+    error: "কিবা ভুল হ'ল",
+    retry: "পুনৰ চেষ্টা কৰক",
+    back: "উভতি যাওক",
+    next: "পৰৱৰ্তী",
+    submit: "দাখিল কৰক",
+    cancel: "বাতিল কৰক",
+    success: "সফল",
+    print: "প্ৰিণ্ট কৰক",
+    download: "ডাউনলোড কৰক",
+  },
+  footer: {
+    helpline: "হেল্পলাইন",
+  },
+};
+
 // Initialize i18n
 i18n.use(initReactI18next).init({
   resources: {
     en: { translation: en },
     hi: { translation: hi },
+    as: { translation: as },
   },
   lng: "en",
   fallbackLng: "en",
@@ -198,7 +286,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     setMounted(true);
     // Load saved language preference
     const savedLang = localStorage.getItem("suvidha-lang");
-    if (savedLang && (savedLang === "en" || savedLang === "hi")) {
+    if (savedLang && (savedLang === "en" || savedLang === "hi" || savedLang === "as")) {
       i18n.changeLanguage(savedLang);
     }
   }, []);
@@ -211,3 +299,4 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 }
 
 export { i18n };
+

@@ -192,26 +192,15 @@ export function WaterDashboard() {
                             <span className="text-xs font-bold text-primary uppercase tracking-tight">Submit Reading</span>
                         </Link>
 
-                        {/* 3. Report Leakage */}
+                        {/* 3. Grievances */}
                         <Link
-                            href="/grievances/new?category=WATER_LEAKAGE"
+                            href="/grievances"
                             className="kiosk-card flex flex-col items-center text-center p-4 hover:border-cta border-2 border-transparent bg-white group"
                         >
                             <div className="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center mb-2 group-hover:bg-red-500 group-hover:text-white transition-colors">
-                                <Wrench className="w-5 h-5 text-red-600 group-hover:text-white" />
+                                <AlertCircle className="w-5 h-5 text-red-600 group-hover:text-white" />
                             </div>
-                            <span className="text-xs font-bold text-primary uppercase tracking-tight">Report Leak</span>
-                        </Link>
-
-                        {/* 4. Quality Complaint */}
-                        <Link
-                            href="/grievances/new?category=WATER_QUALITY"
-                            className="kiosk-card flex flex-col items-center text-center p-4 hover:border-cta border-2 border-transparent bg-white group"
-                        >
-                            <div className="w-10 h-10 bg-amber-50 rounded-lg flex items-center justify-center mb-2 group-hover:bg-amber-500 group-hover:text-white transition-colors">
-                                <AlertCircle className="w-5 h-5 text-amber-600 group-hover:text-white" />
-                            </div>
-                            <span className="text-xs font-bold text-primary uppercase tracking-tight">Quality Issue</span>
+                            <span className="text-xs font-bold text-primary uppercase tracking-tight">Grievances</span>
                         </Link>
 
                         {/* 5. History */}

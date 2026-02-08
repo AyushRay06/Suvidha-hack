@@ -245,15 +245,15 @@ export function ElectricityDashboard() {
                                     <span className="text-sm font-medium text-primary">Submit Reading</span>
                                 </Link>
 
-                                <div
-                                    onClick={() => setShowOutageReport(true)}
-                                    className="kiosk-card flex flex-col items-center text-center p-4 hover:border-cta border-2 border-transparent cursor-pointer"
+                                <Link
+                                    href="/grievances"
+                                    className="kiosk-card flex flex-col items-center text-center p-4 hover:border-cta border-2 border-transparent"
                                 >
                                     <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center mb-2">
                                         <AlertCircle className="w-5 h-5 text-red-600" />
                                     </div>
-                                    <span className="text-sm font-medium text-primary">Report Outage</span>
-                                </div>
+                                    <span className="text-sm font-medium text-primary">Grievances</span>
+                                </Link>
                             </div>
                         </section>
 

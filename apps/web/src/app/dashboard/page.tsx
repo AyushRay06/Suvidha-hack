@@ -40,7 +40,7 @@ export default function DashboardPage() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
   const { user, isAuthenticated, logout } = useAuthStore();
-  
+
   const [pendingBills, setPendingBills] = useState<Bill[]>([]);
   const [connections, setConnections] = useState<Connection[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,7 +50,7 @@ export default function DashboardPage() {
       router.push("/auth/login");
       return;
     }
-    
+
     fetchDashboardData();
   }, [isAuthenticated, router]);
 
@@ -58,7 +58,7 @@ export default function DashboardPage() {
     try {
       const token = useAuthStore.getState().tokens?.accessToken;
       const headers = { Authorization: `Bearer ${token}` };
-      
+
       // Fetch pending bills
       const billsRes = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/billing/bills?status=UNPAID`,
@@ -68,7 +68,7 @@ export default function DashboardPage() {
         const data = await billsRes.json();
         setPendingBills(data.data?.slice(0, 3) || []);
       }
-      
+
       // Fetch connections
       const connRes = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/connections`,
@@ -151,6 +151,63 @@ export default function DashboardPage() {
           </div>
         )}
 
+        {/* Select a Service */}
+        <section className="mb-8">
+          <h2 className="font-heading text-lg text-primary mb-4 flex items-center gap-2">
+            <span className="w-1 h-5 bg-cta rounded-full"></span>
+            Select a Service
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {/* Electricity */}
+            <Link
+              href="/services/electricity"
+              className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col items-center text-center group"
+            >
+              <div className="w-14 h-14 bg-yellow-50 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <Zap className="w-7 h-7 text-yellow-500" />
+              </div>
+              <h3 className="font-semibold text-primary mb-1">Electricity</h3>
+              <p className="text-xs text-muted-foreground">Pay bills, new connections, meter reading</p>
+            </Link>
+
+            {/* Gas */}
+            <Link
+              href="/services/gas"
+              className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col items-center text-center group"
+            >
+              <div className="w-14 h-14 bg-red-50 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <Flame className="w-7 h-7 text-red-400" />
+              </div>
+              <h3 className="font-semibold text-primary mb-1">Gas</h3>
+              <p className="text-xs text-muted-foreground">Bill payments, cylinder booking</p>
+            </Link>
+
+            {/* Water */}
+            <Link
+              href="/services/water"
+              className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col items-center text-center group"
+            >
+              <div className="w-14 h-14 bg-blue-50 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <Droplets className="w-7 h-7 text-blue-400" />
+              </div>
+              <h3 className="font-semibold text-primary mb-1">Water</h3>
+              <p className="text-xs text-muted-foreground">Pay bills, report leakage</p>
+            </Link>
+
+            {/* Municipal */}
+            <Link
+              href="/services/municipal"
+              className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col items-center text-center group"
+            >
+              <div className="w-14 h-14 bg-green-50 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <Building2 className="w-7 h-7 text-green-500" />
+              </div>
+              <h3 className="font-semibold text-primary mb-1">Municipal</h3>
+              <p className="text-xs text-muted-foreground">Waste, roads, streetlights</p>
+            </Link>
+          </div>
+        </section>
+
         {/* Quick Links */}
         <section className="mb-8">
           <h2 className="font-heading text-lg text-primary mb-4 flex items-center gap-2">
@@ -182,7 +239,7 @@ export default function DashboardPage() {
             <span className="w-1 h-5 bg-cta rounded-full"></span>
             My Service Connections
           </h2>
-          
+
           {loading ? (
             <div className="text-center py-8 text-muted-foreground">Loading...</div>
           ) : connections.length > 0 ? (
@@ -205,9 +262,8 @@ export default function DashboardPage() {
                         Connection: {conn.connectionNumber}
                       </p>
                     </div>
-                    <span className={`px-2 py-1 text-xs rounded-full ${
-                      conn.status === "ACTIVE" ? "bg-success/10 text-success" : "bg-slate-100 text-slate-600"
-                    }`}>
+                    <span className={`px-2 py-1 text-xs rounded-full ${conn.status === "ACTIVE" ? "bg-success/10 text-success" : "bg-slate-100 text-slate-600"
+                      }`}>
                       {conn.status}
                     </span>
                     <ChevronRight className="w-5 h-5 text-muted-foreground" />

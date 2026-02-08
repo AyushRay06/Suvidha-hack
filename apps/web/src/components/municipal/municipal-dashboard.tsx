@@ -19,7 +19,10 @@ import {
     Clock,
     MapPin,
     Phone,
-    AlertCircle
+    AlertCircle,
+    Zap,
+    Flame,
+    Droplets
 } from "lucide-react";
 import { useAuthStore } from "@/lib/store/auth";
 import { ComplaintForm } from "./complaint-form";
@@ -223,49 +226,16 @@ export function MunicipalDashboard() {
                             <span className="text-xs font-bold text-primary uppercase tracking-tight">Property Tax</span>
                         </Link>
 
-                        {/* 2. Waste Collection */}
-                        <button
-                            onClick={() => handleQuickAction('GARBAGE')}
+                        {/* 2. Grievances */}
+                        <Link
+                            href="/grievances"
                             className="kiosk-card flex flex-col items-center text-center p-4 hover:border-cta border-2 border-transparent bg-white group"
                         >
-                            <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center mb-2 group-hover:bg-green-500 group-hover:text-white transition-colors">
-                                <Trash2 className="w-5 h-5 text-green-600 group-hover:text-white" />
+                            <div className="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center mb-2 group-hover:bg-red-500 group-hover:text-white transition-colors">
+                                <AlertCircle className="w-5 h-5 text-red-600 group-hover:text-white" />
                             </div>
-                            <span className="text-xs font-bold text-primary uppercase tracking-tight">Waste Issue</span>
-                        </button>
-
-                        {/* 3. Streetlight */}
-                        <button
-                            onClick={() => handleQuickAction('STREETLIGHT')}
-                            className="kiosk-card flex flex-col items-center text-center p-4 hover:border-cta border-2 border-transparent bg-white group"
-                        >
-                            <div className="w-10 h-10 bg-yellow-50 rounded-lg flex items-center justify-center mb-2 group-hover:bg-yellow-500 group-hover:text-white transition-colors">
-                                <Lightbulb className="w-5 h-5 text-yellow-600 group-hover:text-white" />
-                            </div>
-                            <span className="text-xs font-bold text-primary uppercase tracking-tight">Streetlight</span>
-                        </button>
-
-                        {/* 4. Road Repair */}
-                        <button
-                            onClick={() => handleQuickAction('ROAD_REPAIR')}
-                            className="kiosk-card flex flex-col items-center text-center p-4 hover:border-cta border-2 border-transparent bg-white group"
-                        >
-                            <div className="w-10 h-10 bg-orange-50 rounded-lg flex items-center justify-center mb-2 group-hover:bg-orange-500 group-hover:text-white transition-colors">
-                                <Construction className="w-5 h-5 text-orange-600 group-hover:text-white" />
-                            </div>
-                            <span className="text-xs font-bold text-primary uppercase tracking-tight">Road Repair</span>
-                        </button>
-
-                        {/* 5. Drainage */}
-                        <button
-                            onClick={() => handleQuickAction('DRAINAGE')}
-                            className="kiosk-card flex flex-col items-center text-center p-4 hover:border-cta border-2 border-transparent bg-white group"
-                        >
-                            <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center mb-2 group-hover:bg-blue-500 group-hover:text-white transition-colors">
-                                <Waves className="w-5 h-5 text-blue-600 group-hover:text-white" />
-                            </div>
-                            <span className="text-xs font-bold text-primary uppercase tracking-tight">Drainage</span>
-                        </button>
+                            <span className="text-xs font-bold text-primary uppercase tracking-tight">Grievances</span>
+                        </Link>
 
                         {/* 6. Support */}
                         <Link

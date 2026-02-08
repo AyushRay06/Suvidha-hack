@@ -139,4 +139,16 @@ Razorpay integration for bill payments.
 
 ---
 
-*Updated on: 2026-02-08*
+## 🌐 Multilingual Support & Internationalization
+Comprehensive language support for English, Hindi, and Assamese to ensure accessibility for all users.
+
+- **Assamese Translations**: Full support for Assamese (`as`) added to the i18n provider.
+- **Universal Dashboard Translations**:
+  - **Main Dashboard**: Standardized "Select a Service" section with localized titles and descriptions.
+  - **Service Dashboards**: Complete translation of Electricity, Gas, Water, and Municipal dashboards including headers, bills, and quick actions.
+- **Language Toggle Integration**: Consistent language switcher added to the header of all service dashboards.
+- **Unified Keys**: Implemented consistent translation keys for common actions (`payBills`, `history`, `support`) across all modules.
+
+---
+
+*Updated on: 2026-02-09*
