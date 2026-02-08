@@ -24,6 +24,25 @@ async function main() {
   });
   console.log(`✅ Created user: ${user.name} (${user.phone})`);
 
+  // Create admin user
+  const admin = await prisma.user.upsert({
+    where: { phone: "9999999999" },
+    update: {},
+    create: {
+      phone: "9999999999",
+      name: "Admin User",
+      email: "admin@suvidha.gov.in",
+      address: "SUVIDHA HQ, Smart City Complex",
+      city: "New Delhi",
+      state: "Delhi",
+      pincode: "110001",
+      language: "en",
+      isVerified: true,
+      role: "ADMIN",
+    },
+  });
+  console.log(`✅ Created admin: ${admin.name} (${admin.phone})`);
+
   // Create service connections
   const connections = await Promise.all([
     prisma.serviceConnection.upsert({

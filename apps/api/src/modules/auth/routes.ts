@@ -45,17 +45,17 @@ const generateOtp = (): string => {
 router.post('/send-otp', async (req, res, next) => {
   try {
     const { phone } = sendOtpSchema.parse(req.body);
-    
+
     // Generate OTP
     const otp = generateOtp();
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
-    
+
     // Store OTP (in production, use Redis)
     otpStore.set(phone, { otp, expiresAt });
-    
+
     // In production, send OTP via SMS
     console.log(`[MOCK SMS] OTP for ${phone}: ${otp}`);
-    
+
     res.json({
       success: true,
       message: 'OTP sent successfully',
@@ -71,35 +71,38 @@ router.post('/send-otp', async (req, res, next) => {
 router.post('/login', async (req, res, next) => {
   try {
     const { phone, otp } = verifyOtpSchema.parse(req.body);
-    
-    // Verify OTP
+
+    // Verify OTP - in dev mode, accept '123456' as fallback
     const storedOtp = otpStore.get(phone);
-    if (!storedOtp || storedOtp.otp !== otp || storedOtp.expiresAt < new Date()) {
+    const isValidOtp = (storedOtp && storedOtp.otp === otp && storedOtp.expiresAt > new Date()) ||
+      (process.env.NODE_ENV === 'development' && otp === '123456');
+
+    if (!isValidOtp) {
       throw new ApiError('Invalid or expired OTP', 400);
     }
-    
+
     // Clear OTP
     otpStore.delete(phone);
-    
+
     // Find user
     const user = await prisma.user.findUnique({ where: { phone } });
     if (!user) {
       throw new ApiError('User not found. Please register first.', 404);
     }
-    
+
     // Generate tokens
     const accessToken = jwt.sign(
       { userId: user.id, phone: user.phone, role: user.role },
       JWT_SECRET,
       { expiresIn: JWT_EXPIRES_IN }
     );
-    
+
     const refreshToken = jwt.sign(
       { userId: user.id, type: 'refresh' },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
-    
+
     // Create session
     await prisma.session.create({
       data: {
@@ -110,7 +113,7 @@ router.post('/login', async (req, res, next) => {
         kioskId: req.headers['x-kiosk-id'] as string,
       },
     });
-    
+
     res.json({
       success: true,
       data: {
@@ -139,22 +142,25 @@ router.post('/login', async (req, res, next) => {
 router.post('/register', async (req, res, next) => {
   try {
     const data = registerSchema.parse(req.body);
-    
-    // Verify OTP
+
+    // Verify OTP - in dev mode, accept '123456' as fallback
     const storedOtp = otpStore.get(data.phone);
-    if (!storedOtp || storedOtp.otp !== data.otp || storedOtp.expiresAt < new Date()) {
+    const isValidOtp = (storedOtp && storedOtp.otp === data.otp && storedOtp.expiresAt > new Date()) ||
+      (process.env.NODE_ENV === 'development' && data.otp === '123456');
+
+    if (!isValidOtp) {
       throw new ApiError('Invalid or expired OTP', 400);
     }
-    
+
     // Clear OTP
     otpStore.delete(data.phone);
-    
+
     // Check if user exists
     const existingUser = await prisma.user.findUnique({ where: { phone: data.phone } });
     if (existingUser) {
       throw new ApiError('User already exists. Please login.', 400);
     }
-    
+
     // Create user
     const user = await prisma.user.create({
       data: {
@@ -169,20 +175,20 @@ router.post('/register', async (req, res, next) => {
         isVerified: true,
       },
     });
-    
+
     // Generate tokens
     const accessToken = jwt.sign(
       { userId: user.id, phone: user.phone, role: user.role },
       JWT_SECRET,
       { expiresIn: JWT_EXPIRES_IN }
     );
-    
+
     const refreshToken = jwt.sign(
       { userId: user.id, type: 'refresh' },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
-    
+
     // Create session
     await prisma.session.create({
       data: {
@@ -192,7 +198,7 @@ router.post('/register', async (req, res, next) => {
         expiresAt: new Date(Date.now() + REFRESH_TOKEN_EXPIRES_IN),
       },
     });
-    
+
     res.status(201).json({
       success: true,
       data: {
@@ -221,14 +227,14 @@ router.post('/register', async (req, res, next) => {
 router.post('/refresh', async (req, res, next) => {
   try {
     const { refreshToken } = req.body;
-    
+
     if (!refreshToken) {
       throw new ApiError('Refresh token required', 400);
     }
-    
+
     // Verify refresh token
     const decoded = jwt.verify(refreshToken, JWT_SECRET) as { userId: string };
-    
+
     // Find session
     const session = await prisma.session.findFirst({
       where: {
@@ -238,24 +244,24 @@ router.post('/refresh', async (req, res, next) => {
       },
       include: { user: true },
     });
-    
+
     if (!session) {
       throw new ApiError('Invalid or expired refresh token', 401);
     }
-    
+
     // Generate new access token
     const newAccessToken = jwt.sign(
       { userId: session.user.id, phone: session.user.phone, role: session.user.role },
       JWT_SECRET,
       { expiresIn: JWT_EXPIRES_IN }
     );
-    
+
     // Update session
     await prisma.session.update({
       where: { id: session.id },
       data: { token: newAccessToken },
     });
-    
+
     res.json({
       success: true,
       data: {
@@ -272,16 +278,16 @@ router.post('/refresh', async (req, res, next) => {
 router.post('/logout', async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
-    
+
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.split(' ')[1];
-      
+
       // Delete session
       await prisma.session.deleteMany({
         where: { token },
       });
     }
-    
+
     res.json({
       success: true,
       message: 'Logged out successfully',

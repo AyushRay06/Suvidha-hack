@@ -83,20 +83,20 @@ enum NotificationType {
 // ============================================
 
 model User {
-  id            String    @id @default(cuid())
-  phone         String    @unique
-  email         String?   @unique
-  aadhaarHash   String?   // Hashed Aadhaar for verification
-  name          String
-  address       String?
-  city          String?
-  state         String?
-  pincode       String?
-  role          Role      @default(CITIZEN)
-  language      String    @default("en") // en, hi
-  isVerified    Boolean   @default(false)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id          String   @id @default(cuid())
+  phone       String   @unique
+  email       String?  @unique
+  aadhaarHash String? // Hashed Aadhaar for verification
+  name        String
+  address     String?
+  city        String?
+  state       String?
+  pincode     String?
+  role        Role     @default(CITIZEN)
+  language    String   @default("en") // en, hi
+  isVerified  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   // Relations
   connections     ServiceConnection[]
@@ -109,6 +109,11 @@ model User {
   sessions        Session[]
   properties      Property[]
   civicComplaints CivicComplaint[]
+  // NEW: Added from master branch
+  serviceRequests ServiceRequest[]
+  sigmLogs        SIGMLog[]
+  requestLocks    RequestLock[]
+  backendActions  BackendActionQueue[]
 
   @@index([phone])
   @@index([email])
@@ -119,7 +124,7 @@ model Session {
   userId       String
   token        String   @unique
   refreshToken String   @unique
-  kioskId      String?  // Track which kiosk was used
+  kioskId      String? // Track which kiosk was used
   expiresAt    DateTime
   createdAt    DateTime @default(now())
 
@@ -144,12 +149,12 @@ model ServiceConnection {
   city            String
   state           String
   pincode         String
-  sanctionedLoad  Float?           // For electricity (in kW)
-  loadType        String?          // "RESIDENTIAL", "COMMERCIAL", "INDUSTRIAL"
-  phase           String?          // "SINGLE", "THREE" - for electricity
+  sanctionedLoad  Float? // For electricity (in kW)
+  loadType        String? // "RESIDENTIAL", "COMMERCIAL", "INDUSTRIAL"
+  phase           String? // "SINGLE", "THREE" - for electricity
   // Gas Fields
   provider        GasProvider?
-  agency          String?          // Gas agency name
+  agency          String? // Gas agency name
   cylinders       Int?             @default(1) // 1 (Single) or 2 (Double/DBC)
   connectionDate  DateTime?
   lastReadingDate DateTime?
@@ -157,11 +162,13 @@ model ServiceConnection {
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
 
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  bills        Bill[]
-  meterReadings MeterReading[]
-  grievances   Grievance[]
-  gasBookings  GasBooking[]
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bills           Bill[]
+  meterReadings   MeterReading[]
+  grievances      Grievance[]
+  gasBookings     GasBooking[]
+  documents       Document[]
+  serviceRequests ServiceRequest[] // NEW: Added from master
 
   @@index([userId])
   @@index([connectionNo])
@@ -173,8 +180,8 @@ model MeterReading {
   connectionId String
   reading      Float
   readingDate  DateTime
-  submittedBy  String   // "CITIZEN" or "STAFF"
-  imageUrl     String?  // Photo of meter reading
+  submittedBy  String // "CITIZEN" or "STAFF"
+  imageUrl     String? // Photo of meter reading
   isVerified   Boolean  @default(false)
   createdAt    DateTime @default(now())
 
@@ -188,23 +195,23 @@ model MeterReading {
 // ============================================
 
 model Bill {
-  id              String      @id @default(cuid())
-  userId          String
-  connectionId    String
-  billNo          String      @unique
-  billDate        DateTime
-  dueDate         DateTime
-  periodFrom      DateTime
-  periodTo        DateTime
-  unitsConsumed   Float?
-  amount          Float
-  lateFee         Float       @default(0)
-  totalAmount     Float
-  amountPaid      Float       @default(0)
-  status          BillStatus  @default(UNPAID)
-  pdfUrl          String?
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  id            String     @id @default(cuid())
+  userId        String
+  connectionId  String
+  billNo        String     @unique
+  billDate      DateTime
+  dueDate       DateTime
+  periodFrom    DateTime
+  periodTo      DateTime
+  unitsConsumed Float?
+  amount        Float
+  lateFee       Float      @default(0)
+  totalAmount   Float
+  amountPaid    Float      @default(0)
+  status        BillStatus @default(UNPAID)
+  pdfUrl        String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
 
   user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   connection ServiceConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
@@ -246,25 +253,25 @@ model Payment {
 // ============================================
 
 model Grievance {
-  id              String            @id @default(cuid())
-  userId          String
-  connectionId    String?
-  ticketNo        String            @unique
-  serviceType     ServiceType
-  category        String            // e.g., "Billing Issue", "Outage", "New Connection"
-  subject         String
-  description     String
-  priority        GrievancePriority @default(MEDIUM)
-  status          GrievanceStatus   @default(SUBMITTED)
-  assignedTo      String?           // Staff user ID
-  resolvedAt      DateTime?
-  resolution      String?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+  id           String            @id @default(cuid())
+  userId       String
+  connectionId String?
+  ticketNo     String            @unique
+  serviceType  ServiceType
+  category     String // e.g., "Billing Issue", "Outage", "New Connection"
+  subject      String
+  description  String
+  priority     GrievancePriority @default(MEDIUM)
+  status       GrievanceStatus   @default(SUBMITTED)
+  assignedTo   String? // Staff user ID
+  resolvedAt   DateTime?
+  resolution   String?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
 
-  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  connection ServiceConnection? @relation(fields: [connectionId], references: [id])
-  timeline   GrievanceTimeline[]
+  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  connection  ServiceConnection?  @relation(fields: [connectionId], references: [id])
+  timeline    GrievanceTimeline[]
   attachments Document[]
 
   @@index([userId])
@@ -278,7 +285,7 @@ model GrievanceTimeline {
   grievanceId String
   action      String
   description String
-  actionBy    String   // User ID or "SYSTEM"
+  actionBy    String // User ID or "SYSTEM"
   createdAt   DateTime @default(now())
 
   grievance Grievance @relation(fields: [grievanceId], references: [id], onDelete: Cascade)
@@ -295,10 +302,10 @@ model Notification {
   userId    String
   type      NotificationType
   title     String
-  titleHi   String?          // Hindi title
+  titleHi   String? // Hindi title
   message   String
-  messageHi String?          // Hindi message
-  data      Json?            // Additional payload
+  messageHi String? // Hindi message
+  data      Json? // Additional payload
   isRead    Boolean          @default(false)
   readAt    DateTime?
   createdAt DateTime         @default(now())
@@ -312,19 +319,19 @@ model Notification {
 
 // System-wide alerts (outages, emergencies)
 model SystemAlert {
-  id          String      @id @default(cuid())
-  serviceType ServiceType
-  title       String
-  titleHi     String?
-  message     String
-  messageHi   String?
-  affectedArea String?    // Pincode or area name
-  severity    String      // "info", "warning", "critical"
-  isActive    Boolean     @default(true)
-  startsAt    DateTime
-  endsAt      DateTime?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id           String      @id @default(cuid())
+  serviceType  ServiceType
+  title        String
+  titleHi      String?
+  message      String
+  messageHi    String?
+  affectedArea String? // Pincode or area name
+  severity     String // "info", "warning", "critical"
+  isActive     Boolean     @default(true)
+  startsAt     DateTime
+  endsAt       DateTime?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
 
   @@index([serviceType])
   @@index([isActive])
@@ -335,18 +342,20 @@ model SystemAlert {
 // ============================================
 
 model Document {
-  id          String    @id @default(cuid())
+  id          String   @id @default(cuid())
   userId      String
   grievanceId String?
   name        String
-  type        String    // "ID_PROOF", "ADDRESS_PROOF", "RECEIPT", "CERTIFICATE"
+  type        String // "ID_PROOF", "ADDRESS_PROOF", "RECEIPT", "CERTIFICATE"
   mimeType    String
   url         String
   size        Int
-  createdAt   DateTime  @default(now())
+  createdAt   DateTime @default(now())
 
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  grievance Grievance? @relation(fields: [grievanceId], references: [id])
+  user                User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  grievance           Grievance?         @relation(fields: [grievanceId], references: [id])
+  ServiceConnection   ServiceConnection? @relation(fields: [serviceConnectionId], references: [id])
+  serviceConnectionId String?
 
   @@index([userId])
   @@index([grievanceId])
@@ -357,17 +366,17 @@ model Document {
 // ============================================
 
 model Kiosk {
-  id          String   @id @default(cuid())
-  name        String
-  location    String
-  address     String
-  city        String
-  state       String
-  pincode     String
-  isOnline    Boolean  @default(true)
-  lastPingAt  DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String    @id @default(cuid())
+  name       String
+  location   String
+  address    String
+  city       String
+  state      String
+  pincode    String
+  isOnline   Boolean   @default(true)
+  lastPingAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
   logs KioskLog[]
 
@@ -377,7 +386,7 @@ model Kiosk {
 model KioskLog {
   id        String   @id @default(cuid())
   kioskId   String
-  action    String   // "LOGIN", "PAYMENT", "GRIEVANCE", "PRINT"
+  action    String // "LOGIN", "PAYMENT", "GRIEVANCE", "PRINT"
   userId    String?
   details   Json?
   createdAt DateTime @default(now())
@@ -395,10 +404,10 @@ model KioskLog {
 model Tariff {
   id          String      @id @default(cuid())
   serviceType ServiceType
-  loadType    String      // "RESIDENTIAL", "COMMERCIAL", "INDUSTRIAL"
-  slabStart   Float       // Units from (e.g., 0)
-  slabEnd     Float?      // Units to (e.g., 100, null for unlimited)
-  ratePerUnit Float       // Rate in rupees
+  loadType    String // "RESIDENTIAL", "COMMERCIAL", "INDUSTRIAL"
+  slabStart   Float // Units from (e.g., 0)
+  slabEnd     Float? // Units to (e.g., 100, null for unlimited)
+  ratePerUnit Float // Rate in rupees
   fixedCharge Float       @default(0) // Monthly fixed charge
   isActive    Boolean     @default(true)
   validFrom   DateTime    @default(now())
@@ -422,8 +431,8 @@ enum JobStatus {
 
 model Job {
   id          String    @id @default(cuid())
-  type        String    // "GENERATE_BILLS", "SEND_NOTIFICATIONS", etc.
-  payload     Json?     // Job-specific data
+  type        String // "GENERATE_BILLS", "SEND_NOTIFICATIONS", etc.
+  payload     Json? // Job-specific data
   status      JobStatus @default(PENDING)
   attempts    Int       @default(0)
   maxAttempts Int       @default(3)
@@ -458,18 +467,18 @@ enum BookingStatus {
 }
 
 model GasBooking {
-  id              String        @id @default(cuid())
-  userId          String
-  connectionId    String
-  bookingId       String        @unique // e.g., GAS-2024-XXX
-  bookingDate     DateTime      @default(now())
-  status          BookingStatus @default(BOOKED)
-  deliveryDate    DateTime?
-  amount          Float
-  subsidyAmount   Float?        @default(0)
-  otp             String?       // Delivery OTP
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  id            String        @id @default(cuid())
+  userId        String
+  connectionId  String
+  bookingId     String        @unique // e.g., GAS-2024-XXX
+  bookingDate   DateTime      @default(now())
+  status        BookingStatus @default(BOOKED)
+  deliveryDate  DateTime?
+  amount        Float
+  subsidyAmount Float?        @default(0)
+  otp           String? // Delivery OTP
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 
   user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   connection ServiceConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
@@ -509,22 +518,22 @@ enum ComplaintStatus {
 }
 
 model Property {
-  id            String       @id @default(cuid())
-  userId        String
-  propertyId    String       @unique // e.g., PROP-GHY-2024-001
-  propertyType  PropertyType @default(RESIDENTIAL)
-  address       String
-  ward          String?      // Ward number
-  area          Float        // Area in sq ft
-  city          String
-  state         String
-  pincode       String
-  isVerified    Boolean      @default(false)
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  id           String       @id @default(cuid())
+  userId       String
+  propertyId   String       @unique // e.g., PROP-GHY-2024-001
+  propertyType PropertyType @default(RESIDENTIAL)
+  address      String
+  ward         String? // Ward number
+  area         Float // Area in sq ft
+  city         String
+  state        String
+  pincode      String
+  isVerified   Boolean      @default(false)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
 
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  taxRecords   PropertyTax[]
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  taxRecords PropertyTax[]
 
   @@index([userId])
   @@index([propertyId])
@@ -533,10 +542,10 @@ model Property {
 model PropertyTax {
   id            String     @id @default(cuid())
   propertyId    String
-  financialYear String     // e.g., "2024-25"
-  baseAmount    Float      // Calculated tax
+  financialYear String // e.g., "2024-25"
+  baseAmount    Float // Calculated tax
   surcharge     Float      @default(0)
-  discount      Float      @default(0)  // Early payment discount
+  discount      Float      @default(0) // Early payment discount
   totalAmount   Float
   amountPaid    Float      @default(0)
   status        BillStatus @default(UNPAID)
@@ -554,23 +563,23 @@ model PropertyTax {
 }
 
 model CivicComplaint {
-  id            String            @id @default(cuid())
-  userId        String
-  complaintNo   String            @unique // e.g., CMP-2024-001234
-  category      ComplaintCategory
-  subject       String
-  description   String
-  location      String            // Address or landmark
-  latitude      Float?
-  longitude     Float?
-  imageUrl      String?
-  priority      GrievancePriority @default(MEDIUM)
-  status        ComplaintStatus   @default(OPEN)
-  assignedTo    String?           // Staff ID
-  resolvedAt    DateTime?
-  resolution    String?
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
+  id          String            @id @default(cuid())
+  userId      String
+  complaintNo String            @unique // e.g., CMP-2024-001234
+  category    ComplaintCategory
+  subject     String
+  description String
+  location    String // Address or landmark
+  latitude    Float?
+  longitude   Float?
+  imageUrl    String?
+  priority    GrievancePriority @default(MEDIUM)
+  status      ComplaintStatus   @default(OPEN)
+  assignedTo  String? // Staff ID
+  resolvedAt  DateTime?
+  resolution  String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -578,4 +587,140 @@ model CivicComplaint {
   @@index([complaintNo])
   @@index([category])
   @@index([status])
+}
+
+// ============================================
+// SERVICE REQUESTS (from master branch)
+// ============================================
+
+enum RequestStatus {
+  SUBMITTED
+  IN_PROGRESS
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
+model ServiceRequest {
+  id           String        @id @default(cuid())
+  userId       String
+  connectionId String?
+  type         String // "NAME_CHANGE", "LOAD_CHANGE", "DISCONNECTION", "METER_TEST"
+  status       RequestStatus @default(SUBMITTED)
+  category     String? // "IDENTITY", "LOAD", "TECHNICAL", "OTHER"
+  data         Json // Details of the request
+  description  String?
+  assignedTo   String? // Staff user ID
+  resolvedAt   DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  connection ServiceConnection? @relation(fields: [connectionId], references: [id])
+
+  @@index([userId])
+  @@index([connectionId])
+  @@index([status])
+  @@index([type])
+}
+
+// ============================================
+// SINGLE-INTERACTION GUARANTEE MODE (SIGM) - from master branch
+// ============================================
+
+enum GuaranteeStatus {
+  GUARANTEED // Request will be completed without repeat visits
+  NOT_GUARANTEED // Additional backend action required but no re-application needed
+  BLOCKED // Cannot proceed - requires citizen action
+}
+
+enum SIGMRequestType {
+  BILL_PAYMENT
+  NEW_CONNECTION
+  COMPLAINT_REGISTRATION
+  DOCUMENT_REQUEST
+  METER_READING
+}
+
+enum BackendActionStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
+
+// SIGM check log for every request
+model SIGMLog {
+  id                  String          @id @default(cuid())
+  userId              String
+  kioskId             String?
+  requestType         SIGMRequestType
+  serviceType         ServiceType
+  guaranteeStatus     GuaranteeStatus
+  blockingReasons     Json? // Array of blocking reasons with citizen-friendly messages
+  checkDetails        Json? // Full validation details for debugging
+  citizenAcknowledged Boolean         @default(false)
+  acknowledgedAt      DateTime?
+  requestSubmitted    Boolean         @default(false)
+  submittedAt         DateTime?
+  requestId           String? // Link to the actual request (payment, grievance, connection, etc.)
+  createdAt           DateTime        @default(now())
+
+  user           User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  backendActions BackendActionQueue[]
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([guaranteeStatus])
+  @@index([requestType])
+  @@index([serviceType])
+}
+
+// Request Lock - Prevents duplicate submission for same service/consumer
+model RequestLock {
+  id          String          @id @default(cuid())
+  userId      String
+  serviceType ServiceType
+  requestType SIGMRequestType
+  lockKey     String          @unique // Composite key: userId_serviceType_requestType_identifier
+  lockedAt    DateTime        @default(now())
+  expiresAt   DateTime // Locks expire after certain period
+  requestId   String? // Reference to the created request
+  isActive    Boolean         @default(true)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([lockKey])
+  @@index([isActive])
+  @@index([expiresAt])
+}
+
+// Backend Action Queue - For non-guaranteed requests that need backend follow-up
+model BackendActionQueue {
+  id               String              @id @default(cuid())
+  sigmLogId        String
+  userId           String
+  serviceType      ServiceType
+  requestType      SIGMRequestType
+  actionRequired   String // Human-readable action description
+  actionRequiredHi String? // Hindi translation
+  actionDetails    Json? // Technical details for backend processing
+  priority         Int                 @default(5) // 1 = highest, 10 = lowest
+  status           BackendActionStatus @default(PENDING)
+  assignedTo       String? // Staff/technician ID
+  scheduledFor     DateTime? // When the action is scheduled
+  completedAt      DateTime?
+  notes            String?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+
+  sigmLog SIGMLog @relation(fields: [sigmLogId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([priority])
+  @@index([scheduledFor])
+  @@index([sigmLogId])
 }

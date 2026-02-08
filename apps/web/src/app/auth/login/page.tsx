@@ -103,9 +103,15 @@ function LoginForm() {
           description: `Welcome back, ${data.data.user.name}!`,
         });
 
-        // Determine redirect URL directly from params
+        // Determine redirect URL based on role
         const urlParam = searchParams.get('returnUrl');
-        const redirectUrl = urlParam ? decodeURIComponent(urlParam) : "/dashboard";
+        let redirectUrl = urlParam ? decodeURIComponent(urlParam) : "/dashboard";
+
+        // Admin/Staff users should go to admin dashboard
+        if (!urlParam && (data.data.user.role === 'ADMIN' || data.data.user.role === 'STAFF')) {
+          redirectUrl = '/admin';
+        }
+
         router.push(redirectUrl);
       } else {
         throw new Error(data.error || "Login failed");

@@ -3,8 +3,9 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
+import path from 'path';
 
-// Load environment variables
+// Load environment variables (enhanced for monorepo compatibility)
 dotenv.config();
 
 // Import routes
@@ -20,6 +21,11 @@ import gasRoutes from './modules/gas/routes';
 import waterRoutes from './modules/water/routes';
 import municipalRoutes from './modules/municipal/routes';
 import uploadRoutes from './modules/upload/routes';
+
+// NEW: Import routes from master branch
+import { paymentRoutes } from './modules/payment';
+import { sigmRoutes } from './modules/sigm';
+import { serviceRequestRoutes } from './modules/service-request';
 
 // ...
 
@@ -75,6 +81,11 @@ app.use('/api/gas', gasRoutes);
 app.use('/api/water', waterRoutes);
 app.use('/api/municipal', municipalRoutes);
 app.use('/api/upload', uploadRoutes);
+
+// NEW: Routes from master branch
+app.use('/api/payments', paymentRoutes);
+app.use('/api/sigm', sigmRoutes);
+app.use('/api/service-requests', serviceRequestRoutes);
 
 
 // Error handling

@@ -84,5 +84,59 @@ Enhanced complaint filing with photo attachments across all services.
 
 ---
 
-*Updated on: 2026-02-07*
+## 👨‍💼 Admin Panel & Dashboard
+Complete admin panel for monitoring and managing the platform.
 
+- **Admin Dashboard**: Live metrics including today's revenue, active kiosks, total users, and open grievances.
+- **Grievance Management**: `/admin/grievances` page to view, filter, and update status of all user grievances.
+- **User Management**: View all registered citizens with search functionality.
+- **Kiosk Monitoring**: Track kiosk status (online/offline) and transaction counts.
+- **System Alerts**: Create and manage platform-wide alerts for maintenance or outages.
+- **Role-Based Redirect**: Admin/Staff users automatically redirected to `/admin` on login.
+- **Mock OTP**: `123456` works as fallback OTP in development mode for easy testing.
+
+**Admin Credentials:**
+- Phone: `9999999999`
+- OTP: `123456`
+
+---
+
+## 🛡️ SIGM (Single-Interaction Guarantee Mode)
+Backend support for guarantee checks and service request processing.
+
+- **SIGM Service**: `/api/sigm` routes for eligibility checks and guarantee logging.
+- **SIGMMetricsCard**: Admin dashboard component showing guarantee rates and pending actions.
+- **Database Models**: Added `SIGMLog`, `RequestLock`, `BackendActionQueue` models.
+- **Analytics**: Period-based analytics (24h, 7d, 30d) for SIGM performance.
+
+---
+
+## 📋 Service Requests Module
+New module for handling service requests across all utility types.
+
+- **Service Request API**: Create, track, and manage service requests.
+- **Document Generator**: PDF receipt generation for service requests.
+- **Status Tracking**: Request lifecycle from submission to completion.
+
+---
+
+## 💳 Payments Integration
+Razorpay integration for bill payments.
+
+- **Payment Routes**: `/api/payments` for creating orders and verifying payments.
+- **Razorpay SDK**: Server-side integration for order creation and signature verification.
+- **Receipt Generator**: PDF receipt generation for successful payments.
+
+---
+
+## 🐛 Bug Fixes & Improvements
+- **Fixed**: Admin dashboard `toLocaleString` error on undefined stats.
+- **Fixed**: Grievances page `icon` undefined error with fallback defaults.
+- **Fixed**: OTP verification now accepts `123456` in development mode.
+- **Fixed**: Login redirect now routes Admin users to `/admin` instead of `/dashboard`.
+- **Added**: `/api/admin/grievances` endpoint for admin panel grievance display.
+- **Cleanup**: Removed `Shuvidha-master` folder after merge completion.
+
+---
+
+*Updated on: 2026-02-08*

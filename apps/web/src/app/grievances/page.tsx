@@ -33,7 +33,7 @@ export default function GrievancesPage() {
   const { t } = useTranslation();
   const router = useRouter();
   const { isAuthenticated, tokens } = useAuthStore();
-  
+
   const [grievances, setGrievances] = useState<Grievance[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"ALL" | "OPEN" | "RESOLVED">("ALL");
@@ -109,11 +109,10 @@ export default function GrievancesPage() {
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors cursor-pointer ${
-                filter === f
+              className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors cursor-pointer ${filter === f
                   ? "bg-cta text-white"
                   : "bg-white border border-slate-200 text-slate-600 hover:border-cta"
-              }`}
+                }`}
             >
               {f === "ALL" ? "All" : f === "OPEN" ? "Open" : "Resolved"}
             </button>
@@ -128,7 +127,7 @@ export default function GrievancesPage() {
         ) : filteredGrievances.length > 0 ? (
           <div className="space-y-4">
             {filteredGrievances.map((grievance) => {
-              const status = statusStyles[grievance.status];
+              const status = statusStyles[grievance.status] || { icon: AlertCircle, bg: "bg-slate-100", text: "text-slate-600" };
               const StatusIcon = status.icon;
 
               return (
@@ -140,7 +139,7 @@ export default function GrievancesPage() {
                   <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center flex-shrink-0">
                     <MessageSquare className="w-6 h-6 text-slate-600" />
                   </div>
-                  
+
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-xs text-muted-foreground font-mono">
