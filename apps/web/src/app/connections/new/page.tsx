@@ -78,10 +78,10 @@ export default function NewConnectionPage() {
     const [success, setSuccess] = useState<string | null>(null);
 
     const [formData, setFormData] = useState({
-        address: user?.address || "",
-        city: user?.city || "",
-        state: user?.state || "Assam",
-        pincode: user?.pincode || "",
+        address: "",
+        city: "",
+        state: "Assam",
+        pincode: "",
         sanctionedLoad: "",
     });
 

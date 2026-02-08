@@ -10,14 +10,18 @@ import {
   FileText,
   MessageSquare,
   Bell,
-  HelpCircle
+  HelpCircle,
+  ArrowRight,
+  Smartphone
 } from "lucide-react";
 import { LanguageToggle } from "@/components/kiosk/language-toggle";
 import { ServiceCard } from "@/components/kiosk/service-card";
 import { AlertBanner } from "@/components/kiosk/alert-banner";
+import { useKiosk } from "@/lib/hooks/useKiosk";
 
 export default function HomePage() {
   const { t } = useTranslation();
+  const kiosk = useKiosk();
 
   const services = [
     {
@@ -89,25 +93,29 @@ export default function HomePage() {
     },
   ];
 
+  const isKiosK = kiosk.isKiosk || kiosk.isTouchDevice;
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-primary text-white py-6 px-8 shadow-lg">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 bg-white/10 rounded-xl flex items-center justify-center">
-              <Building2 className="w-8 h-8" />
+      <header className="bg-primary text-white py-6 lg:py-10 px-6 lg:px-8 shadow-lg sticky top-0 z-40">
+        <div className={`${isKiosK ? 'max-w-full' : 'max-w-6xl'} mx-auto flex items-center justify-between gap-4`}>
+          <div className="flex items-center gap-4 lg:gap-6 flex-1">
+            <div className={`${isKiosK ? 'w-16 lg:w-20 h-16 lg:h-20' : 'w-14 h-14'} bg-white/10 rounded-2xl flex items-center justify-center flex-shrink-0`}>
+              <Building2 className={`${isKiosK ? 'w-8 lg:w-10 h-8 lg:h-10' : 'w-8 h-8'}`} />
             </div>
-            <div>
-              <h1 className="text-2xl font-heading font-bold">
+            <div className="min-w-0">
+              <h1 className={`${isKiosK ? 'text-2xl lg:text-4xl' : 'text-2xl'} font-heading font-bold truncate`}>
                 {t("app.title")}
               </h1>
-              <p className="text-white/80 text-sm">
+              <p className={`text-white/80 ${isKiosK ? 'text-base lg:text-lg' : 'text-sm'} line-clamp-1`}>
                 {t("app.subtitle")}
               </p>
             </div>
           </div>
-          <LanguageToggle />
+          <div className="flex-shrink-0">
+            <LanguageToggle />
+          </div>
         </div>
       </header>
 
@@ -115,82 +123,92 @@ export default function HomePage() {
       <AlertBanner />
 
       {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-8 py-10">
+      <div className={`${isKiosK ? 'max-w-full' : 'max-w-6xl'} mx-auto px-6 lg:px-8 py-8 lg:py-12`}>
         {/* Welcome Section */}
-        <section className="text-center mb-12">
-          <h2 className="font-heading text-3xl text-primary mb-3">
+        <section className={`text-center mb-12 lg:mb-16 ${isKiosK ? 'py-6 lg:py-10' : 'py-4'}`}>
+          <h2 className={`font-heading font-bold text-primary mb-4 ${isKiosK ? 'text-3xl lg:text-5xl' : 'text-3xl'}`}>
             {t("home.welcome")}
           </h2>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+          <p className={`text-muted-foreground ${isKiosK ? 'text-lg lg:text-2xl' : 'text-lg'} max-w-3xl mx-auto leading-relaxed`}>
             {t("home.description")}
           </p>
         </section>
 
         {/* Services Grid */}
-        <section className="mb-12">
-          <h3 className="font-heading text-xl text-primary mb-6 flex items-center gap-2">
-            <span className="w-1 h-6 bg-cta rounded-full"></span>
+        <section className="mb-12 lg:mb-16">
+          <div className="section-header mb-8">
             {t("home.selectService")}
-          </h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          </div>
+          <div className={`grid gap-6 lg:gap-8 ${isKiosK ? 'grid-cols-2 lg:grid-cols-4' : 'grid-cols-2 md:grid-cols-4'}`}>
             {services.map((service) => (
-              <ServiceCard key={service.id} service={service} />
+              <ServiceCard key={service.id} service={service} isKiosk={isKiosK} />
             ))}
           </div>
         </section>
 
         {/* Quick Actions */}
-        <section className="mb-12">
-          <h3 className="font-heading text-xl text-primary mb-6 flex items-center gap-2">
-            <span className="w-1 h-6 bg-cta rounded-full"></span>
+        <section className="mb-12 lg:mb-16">
+          <div className="section-header mb-8">
             {t("home.quickActions")}
-          </h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          </div>
+          <div className={`grid gap-6 lg:gap-8 ${isKiosK ? 'grid-cols-2 lg:grid-cols-4' : 'grid-cols-2 md:grid-cols-4'}`}>
             {quickActions.map((action) => (
               <Link
                 key={action.id}
                 href={action.href}
-                className="kiosk-card flex items-center gap-4 hover:border-cta border-2 border-transparent"
+                className="kiosk-card group flex flex-col items-center text-center gap-4 p-6 lg:p-8 hover:shadow-lg hover:-translate-y-2"
               >
-                <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center">
-                  <action.icon className="w-6 h-6 text-primary" />
+                <div className={`${isKiosK ? 'w-20 h-20 lg:w-24 lg:h-24' : 'w-14 h-14'} bg-cta-light rounded-2xl flex items-center justify-center group-hover:bg-cta transition-colors duration-200`}>
+                  <action.icon className={`${isKiosK ? 'w-10 h-10 lg:w-12 lg:h-12' : 'w-8 h-8'} text-cta group-hover:text-white transition-colors duration-200`} />
                 </div>
-                <span className="font-medium text-primary">{action.name}</span>
+                <span className={`font-semibold text-primary ${isKiosK ? 'text-lg lg:text-xl' : 'text-base'}`}>
+                  {action.name}
+                </span>
               </Link>
             ))}
           </div>
         </section>
 
-        {/* Login CTA */}
-        <section className="bg-gradient-to-r from-primary to-secondary rounded-2xl p-8 text-white text-center">
-          <h3 className="font-heading text-2xl mb-3">
+        {/* CTA Section */}
+        <section className="bg-gradient-to-r from-primary via-primary to-secondary rounded-3xl p-8 lg:p-12 text-white text-center mb-12">
+          <div className="flex items-center justify-center mb-4 gap-2">
+            <Smartphone className="w-6 h-6 lg:w-8 lg:h-8" />
+            <span className={`font-semibold ${isKiosK ? 'text-lg lg:text-xl' : 'text-base'}`}>
+              {isKiosK ? 'Kiosk Mode' : 'Web Access'}
+            </span>
+          </div>
+          <h3 className={`font-heading font-bold text-white mb-4 ${isKiosK ? 'text-3xl lg:text-4xl' : 'text-2xl'}`}>
             {t("home.loginCta.title")}
           </h3>
-          <p className="text-white/80 mb-6 max-w-lg mx-auto">
+          <p className={`text-white/90 mb-8 max-w-2xl mx-auto leading-relaxed ${isKiosK ? 'text-lg lg:text-xl' : 'text-base'}`}>
             {t("home.loginCta.description")}
           </p>
-          <div className="flex gap-4 justify-center">
+          <div className={`flex flex-col gap-4 lg:flex-row justify-center ${isKiosK ? 'gap-6 lg:gap-8' : 'gap-4'}`}>
             <Link
               href="/auth/login"
-              className="kiosk-button bg-cta text-white rounded-xl hover:bg-cta/90"
+              className="kiosk-button flex items-center justify-center gap-2 bg-cta text-white hover:bg-cta/90 active:scale-95"
             >
               {t("auth.login")}
+              <ArrowRight className="w-5 h-5 lg:w-6 lg:h-6" />
             </Link>
             <Link
               href="/auth/register"
-              className="kiosk-button bg-white text-primary rounded-xl hover:bg-white/90"
+              className="kiosk-button flex items-center justify-center gap-2 bg-white text-primary hover:bg-gray-100 active:scale-95"
             >
               {t("auth.register")}
+              <ArrowRight className="w-5 h-5 lg:w-6 lg:h-6" />
             </Link>
           </div>
         </section>
       </div>
 
       {/* Footer */}
-      <footer className="bg-slate-100 py-6 px-8 mt-12">
-        <div className="max-w-6xl mx-auto text-center text-muted-foreground text-sm">
-          <p>© 2026 SUVIDHA Kiosk • C-DAC Smart City Initiative</p>
-          <p className="mt-1">
+      <footer className="bg-primary/5 border-t border-border py-8 lg:py-10 px-6 lg:px-8 mt-12">
+        <div className={`${isKiosK ? 'max-w-full' : 'max-w-6xl'} mx-auto text-center`}>
+          <p className={`text-muted-foreground font-medium ${isKiosK ? 'text-lg lg:text-xl' : 'text-sm'}`}>
+            © 2026 SUVIDHA Kiosk • C-DAC Smart City Initiative
+          </p>
+          <p className={`text-muted-foreground mt-2 ${isKiosK ? 'text-base lg:text-lg' : 'text-xs'}`}>
             {t("footer.helpline")}: 1800-XXX-XXXX
           </p>
         </div>

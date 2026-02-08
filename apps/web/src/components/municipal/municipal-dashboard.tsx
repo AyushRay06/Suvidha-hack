@@ -178,8 +178,8 @@ export function MunicipalDashboard() {
     return (
         <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
             {/* Header */}
-            <header className="bg-municipal-light py-6 px-6">
-                <div className="max-w-4xl mx-auto">
+            <header className="bg-municipal-light py-6">
+                <div className="max-w-4xl mx-auto px-6">
                     <div className="flex items-center gap-4 mb-4">
                         <Link href="/dashboard" className="hover:opacity-80">
                             <ArrowLeft className="w-6 h-6 text-municipal" />
@@ -197,7 +197,7 @@ export function MunicipalDashboard() {
                 </div>
             </header>
 
-            <div className="max-w-4xl mx-auto px-6 py-6">
+            <div className="max-w-4xl mx-auto px-6 py-6 pb-12">
 
                 {/* Alerts */}
                 {pendingTax > 0 && (

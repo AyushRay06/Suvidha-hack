@@ -60,6 +60,16 @@ npm run dev
 - **API Server**: http://localhost:4000
 - **API Health Check**: http://localhost:4000/health
 
+## Recent Updates
+
+**February 2026**: Service Dashboards Design Enhancement
+- ✅ All service dashboards updated with consistent kiosk-optimized design
+- ✅ Fixed full-width header backgrounds (no more white borders!)
+- ✅ Enhanced electricity dashboard with 6-column responsive grid
+- ✅ Improved visual consistency across all four services
+
+See [UPDATE.md](./UPDATE.md) for detailed changelog.
+
 ## Features
 
 ### For Citizens

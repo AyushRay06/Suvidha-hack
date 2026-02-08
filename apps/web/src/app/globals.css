@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500;600;700&family=Lato:wght@300;400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,25 +6,40 @@
 
 @layer base {
   :root {
-    --background: 210 40% 98%;
-    --foreground: 222 47% 11%;
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    --primary: 222 47% 11%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 215 25% 27%;
+    /* Primary Colors - Deep Blue & White */
+    --primary: 13 27% 42%;           /* #1e3a5f */
+    --primary-light: 210 70% 90%;    /* #d4e6f1 */
+    
+    /* Accent - Vibrant Orange (for CTAs) */
+    --cta: 34 97% 53%;               /* #ff8c00 */
+    --cta-light: 34 100% 94%;        /* #ffe4cc */
+    
+    /* Neutrals */
+    --background: 0 0% 98%;          /* #fafafa */
+    --foreground: 0 0% 12%;          /* #1f1f1f */
+    --card: 0 0% 100%;               /* #ffffff */
+    --card-foreground: 0 0% 12%;     /* #1f1f1f */
+    
+    /* Secondary - Slate */
+    --secondary: 215 13% 34%;        /* #4a5568 */
     --secondary-foreground: 0 0% 100%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
-    --accent: 210 40% 96%;
-    --accent-foreground: 222 47% 11%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 200 98% 39%;
+    
+    /* Muted - Light Gray */
+    --muted: 210 16% 94%;            /* #e8eef7 */
+    --muted-foreground: 215 16% 47%; /* #708090 */
+    
+    /* Borders & Inputs */
+    --border: 210 16% 87%;           /* #d9dce3 */
+    --input: 210 16% 94%;            /* #e8eef7 */
+    
+    /* Status Colors */
+    --success: 142 72% 29%;          /* #16a34a */
+    --destructive: 0 84% 60%;        /* #ef4444 */
+    --warning: 38 92% 50%;           /* #f59e0b */
+    --info: 217 91% 60%;             /* #3b82f6 */
+    
+    /* Utility */
+    --ring: 34 97% 53%;              /* Orange for focus */
     --radius: 0.5rem;
   }
 
@@ -38,44 +53,21 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-heading;
+    @apply font-heading font-semibold;
+  }
+
+  /* High contrast mode support */
+  @media (prefers-contrast: high) {
+    :root {
+      --border: 0 0% 0%;
+      --ring: 0 0% 0%;
+      --foreground: 0 0% 0%;
+      --background: 0 0% 100%;
+    }
   }
 }
 
-/* Touch-friendly kiosk styles */
-@layer components {
-  .kiosk-button {
-    @apply min-h-[60px] min-w-[60px] px-6 py-4 text-lg font-medium
-           transition-all duration-200 ease-out
-           focus:outline-none focus:ring-4 focus:ring-cta/30
-           active:scale-[0.98] cursor-pointer;
-  }
-
-  .kiosk-card {
-    @apply bg-white rounded-xl shadow-kiosk p-6
-           transition-all duration-200
-           hover:shadow-kiosk-hover cursor-pointer;
-  }
-
-  .service-icon {
-    @apply w-16 h-16 rounded-xl flex items-center justify-center
-           transition-transform duration-200 hover:scale-105;
-  }
-
-  .kiosk-input {
-    @apply h-14 text-lg px-4 rounded-lg border-2 border-gray-200
-           focus:border-cta focus:ring-2 focus:ring-cta/20
-           transition-colors duration-200;
-  }
-
-  .skip-link {
-    @apply sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4
-           focus:z-50 focus:bg-cta focus:text-white focus:px-4 focus:py-2
-           focus:rounded-md;
-  }
-}
-
-/* Accessibility */
+/* Accessibility - Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
@@ -84,15 +76,158 @@
   }
 }
 
-/* High contrast mode support */
-@media (prefers-contrast: high) {
-  :root {
-    --border: 0 0% 0%;
-    --ring: 0 0% 0%;
+/* Touch-friendly kiosk styles */
+@layer components {
+  /* Large touch-friendly buttons for kiosk */
+  .kiosk-button {
+    @apply min-h-16 min-w-16 px-8 py-5 text-lg font-semibold
+           rounded-2xl bg-cta text-white
+           transition-all duration-200 ease-out
+           hover:bg-cta/90 active:scale-95
+           focus:outline-none focus:ring-4 focus:ring-cta/30
+           cursor-pointer font-heading;
+  }
+
+  .kiosk-button-secondary {
+    @apply min-h-16 min-w-16 px-8 py-5 text-lg font-semibold
+           rounded-2xl bg-muted text-foreground
+           transition-all duration-200 ease-out
+           hover:bg-muted/80 active:scale-95
+           focus:outline-none focus:ring-4 focus:ring-cta/30
+           cursor-pointer font-heading;
+  }
+
+  /* Service cards with better spacing */
+  .kiosk-card {
+    @apply bg-card rounded-3xl shadow-lg p-8
+           transition-all duration-200
+           hover:shadow-2xl hover:-translate-y-1 cursor-pointer
+           border border-border;
+  }
+
+  .kiosk-card-small {
+    @apply bg-card rounded-2xl shadow-md p-6
+           transition-all duration-200
+           hover:shadow-lg hover:-translate-y-0.5 cursor-pointer
+           border border-border;
+  }
+
+  /* Service icons - larger and more prominent */
+  .service-icon {
+    @apply w-20 h-20 rounded-2xl flex items-center justify-center
+           transition-transform duration-200 hover:scale-110
+           text-4xl;
+  }
+
+  .service-icon-lg {
+    @apply w-28 h-28 rounded-3xl flex items-center justify-center
+           transition-transform duration-200 hover:scale-105
+           text-6xl;
+  }
+
+  /* Large, accessible inputs for kiosk */
+  .kiosk-input {
+    @apply h-16 text-lg px-5 rounded-xl border-2 border-border
+           focus:border-cta focus:ring-2 focus:ring-cta/20
+           transition-colors duration-200 font-body
+           placeholder:text-muted-foreground;
+  }
+
+  .kiosk-input-lg {
+    @apply h-20 text-xl px-6 rounded-2xl border-2 border-border
+           focus:border-cta focus:ring-2 focus:ring-cta/20
+           transition-colors duration-200 font-body
+           placeholder:text-muted-foreground;
+  }
+
+  /* Skip to main content link */
+  .skip-link {
+    @apply sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4
+           focus:z-50 focus:bg-cta focus:text-white focus:px-4 focus:py-2
+           focus:rounded-lg focus:text-base;
+  }
+
+  /* Section headers with accent bar */
+  .section-header {
+    @apply text-2xl font-heading font-bold text-primary mb-6
+           flex items-center gap-3;
+  }
+
+  .section-header::before {
+    @apply content-[''] w-1 h-8 bg-cta rounded-full block;
+  }
+
+  /* Grid layouts for kiosk */
+  .kiosk-grid-2 {
+    @apply grid grid-cols-1 md:grid-cols-2 gap-6;
+  }
+
+  .kiosk-grid-3 {
+    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6;
+  }
+
+  .kiosk-grid-4 {
+    @apply grid grid-cols-2 md:grid-cols-4 gap-6;
+  }
+
+  /* Status badges */
+  .status-badge {
+    @apply inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold;
+  }
+
+  .status-active {
+    @apply bg-green-100 text-green-800;
+  }
+
+  .status-pending {
+    @apply bg-yellow-100 text-yellow-800;
+  }
+
+  .status-inactive {
+    @apply bg-gray-200 text-gray-800;
+  }
+
+  /* Alert boxes with better visibility */
+  .alert-box {
+    @apply rounded-2xl p-6 border-l-4 flex items-start gap-4;
+  }
+
+  .alert-info {
+    @apply bg-blue-50 border-blue-500 text-blue-900;
+  }
+
+  .alert-success {
+    @apply bg-green-50 border-green-500 text-green-900;
+  }
+
+  .alert-warning {
+    @apply bg-yellow-50 border-yellow-500 text-yellow-900;
+  }
+
+  .alert-error {
+    @apply bg-red-50 border-red-500 text-red-900;
+  }
+
+  /* Typography helpers */
+  .text-xl-kiosk {
+    @apply text-xl lg:text-3xl;
+  }
+
+  .text-lg-kiosk {
+    @apply text-lg lg:text-2xl;
+  }
+
+  /* Responsive spacing helpers */
+  .p-kiosk {
+    @apply p-6 lg:p-8;
+  }
+
+  .gap-kiosk {
+    @apply gap-4 lg:gap-8;
   }
 }
 
-/* Print styles for receipts */
+/* Print styles for receipts - high quality */
 @media print {
   .no-print {
     display: none !important;
@@ -101,5 +236,37 @@
   body {
     background: white;
     color: black;
+    font-size: 14px;
+  }
+
+  h1 {
+    font-size: 20px;
+    margin-bottom: 12px;
+  }
+
+  h2 {
+    font-size: 16px;
+    margin-bottom: 10px;
+  }
+
+  .kiosk-button {
+    border: 2px solid black;
+    background: white;
+    color: black;
+  }
+}
+
+/* Orientation - Lock for kiosk landscape mode */
+@media (orientation: landscape) and (max-height: 600px) {
+  body {
+    font-size: 16px;
+  }
+
+  .kiosk-button {
+    @apply min-h-14 py-3 text-base;
+  }
+
+  .section-header {
+    @apply text-xl mb-4;
   }
 }

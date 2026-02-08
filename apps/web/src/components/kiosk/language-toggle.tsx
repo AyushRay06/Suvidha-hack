@@ -23,17 +23,17 @@ export function LanguageToggle() {
   };
 
   return (
-    <div className="flex items-center gap-2">
-      <Globe className="w-5 h-5 text-white/80" />
-      <div className="flex rounded-lg overflow-hidden border border-white/20">
+    <div className="flex items-center gap-2 lg:gap-3">
+      <Globe className="w-5 h-5 lg:w-6 lg:h-6 text-white/90" />
+      <div className="flex rounded-xl lg:rounded-2xl overflow-hidden border-2 border-white/30 backdrop-blur-sm bg-white/5">
         {languages.map((lang) => (
           <button
             key={lang.code}
             onClick={() => selectLanguage(lang.code)}
             disabled={isPending}
-            className={`px-3 py-1.5 text-sm font-medium transition-colors cursor-pointer focus:outline-none ${
+            className={`px-4 lg:px-5 py-2 lg:py-2.5 font-semibold transition-colors duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-white focus:ring-inset text-sm lg:text-base ${
               i18n.language === lang.code
-                ? "bg-white text-primary"
+                ? "bg-white text-primary shadow-lg"
                 : "bg-white/10 text-white hover:bg-white/20"
             }`}
             aria-label={`Select ${lang.label}`}

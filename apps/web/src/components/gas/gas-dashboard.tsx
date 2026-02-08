@@ -169,8 +169,8 @@ export function GasDashboard() {
     return (
         <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
             {/* Header - Aligned with Electricity */}
-            <header className="bg-gas-light py-6 px-6">
-                <div className="max-w-4xl mx-auto">
+            <header className="bg-gas-light py-6">
+                <div className="max-w-4xl mx-auto px-6">
                     <div className="flex items-center gap-4 mb-4">
                         <Link href="/dashboard" className="hover:opacity-80">
                             <ArrowLeft className="w-6 h-6 text-gas" />
@@ -188,7 +188,7 @@ export function GasDashboard() {
                 </div>
             </header>
 
-            <div className="max-w-4xl mx-auto px-6 py-6">
+            <div className="max-w-4xl mx-auto px-6 py-6 pb-12">
                 {/* Pending Bills Alert */}
                 {connection && !connection.cylinders && pendingBills.length > 0 && (
                     <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 flex items-start gap-3">

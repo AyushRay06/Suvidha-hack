@@ -134,8 +134,8 @@ export function ElectricityDashboard() {
     return (
         <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
             {/* Header */}
-            <header className="bg-electricity-light py-6 px-6">
-                <div className="max-w-4xl mx-auto">
+            <header className="bg-electricity-light py-6">
+                <div className="max-w-4xl mx-auto px-6">
                     <div className="flex items-center gap-4 mb-4">
                         <Link href="/dashboard" className="hover:opacity-80">
                             <ArrowLeft className="w-6 h-6 text-electricity" />
@@ -153,7 +153,7 @@ export function ElectricityDashboard() {
                 </div>
             </header>
 
-            <div className="max-w-4xl mx-auto px-6 py-6">
+            <div className="max-w-4xl mx-auto px-6 py-6 pb-12">
 
                 {/* Feature Toggles / Active View */}
                 {showRecharge && connection ? (
@@ -214,45 +214,71 @@ export function ElectricityDashboard() {
                         {/* Quick Actions */}
                         <section className="mb-8">
                             <h2 className="font-heading text-lg text-primary mb-4">Quick Actions</h2>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                                {/* 1. Pay Bills */}
                                 <Link
                                     href="/bills"
-                                    className="kiosk-card flex flex-col items-center text-center p-4 hover:border-cta border-2 border-transparent"
+                                    className="kiosk-card flex flex-col items-center text-center p-4 hover:border-cta border-2 border-transparent bg-white group"
                                 >
-                                    <div className="w-10 h-10 bg-electricity-light rounded-lg flex items-center justify-center mb-2">
-                                        <FileText className="w-5 h-5 text-electricity" />
+                                    <div className="w-10 h-10 bg-electricity-light rounded-lg flex items-center justify-center mb-2 group-hover:bg-electricity group-hover:text-white transition-colors">
+                                        <FileText className="w-5 h-5 text-electricity group-hover:text-white" />
                                     </div>
-                                    <span className="text-sm font-medium text-primary">Pay Bills</span>
+                                    <span className="text-xs font-bold text-primary uppercase tracking-tight">Pay Bills</span>
                                 </Link>
 
-                                <div
-                                    onClick={() => setShowRecharge(true)}
-                                    className="kiosk-card flex flex-col items-center text-center p-4 hover:border-cta border-2 border-transparent cursor-pointer"
-                                >
-                                    <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mb-2">
-                                        <TrendingUp className="w-5 h-5 text-green-600" />
-                                    </div>
-                                    <span className="text-sm font-medium text-primary">Recharge</span>
-                                </div>
-
+                                {/* 2. Submit Reading */}
                                 <Link
                                     href={`/services/electricity/meter-reading`}
-                                    className="kiosk-card flex flex-col items-center text-center p-4 hover:border-cta border-2 border-transparent"
+                                    className="kiosk-card flex flex-col items-center text-center p-4 hover:border-cta border-2 border-transparent bg-white group"
                                 >
-                                    <div className="w-10 h-10 bg-electricity-light rounded-lg flex items-center justify-center mb-2">
-                                        <Gauge className="w-5 h-5 text-electricity" />
+                                    <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center mb-2 group-hover:bg-blue-500 group-hover:text-white transition-colors">
+                                        <Gauge className="w-5 h-5 text-blue-600 group-hover:text-white" />
                                     </div>
-                                    <span className="text-sm font-medium text-primary">Submit Reading</span>
+                                    <span className="text-xs font-bold text-primary uppercase tracking-tight">Submit Reading</span>
                                 </Link>
 
+                                {/* 3. Recharge */}
+                                <div
+                                    onClick={() => setShowRecharge(true)}
+                                    className="kiosk-card flex flex-col items-center text-center p-4 hover:border-cta border-2 border-transparent cursor-pointer bg-white group"
+                                >
+                                    <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center mb-2 group-hover:bg-green-500 group-hover:text-white transition-colors">
+                                        <TrendingUp className="w-5 h-5 text-green-600 group-hover:text-white" />
+                                    </div>
+                                    <span className="text-xs font-bold text-primary uppercase tracking-tight">Recharge</span>
+                                </div>
+
+                                {/* 4. Grievances */}
                                 <Link
                                     href="/grievances"
-                                    className="kiosk-card flex flex-col items-center text-center p-4 hover:border-cta border-2 border-transparent"
+                                    className="kiosk-card flex flex-col items-center text-center p-4 hover:border-cta border-2 border-transparent bg-white group"
                                 >
-                                    <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center mb-2">
-                                        <AlertCircle className="w-5 h-5 text-red-600" />
+                                    <div className="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center mb-2 group-hover:bg-red-500 group-hover:text-white transition-colors">
+                                        <AlertCircle className="w-5 h-5 text-red-600 group-hover:text-white" />
                                     </div>
-                                    <span className="text-sm font-medium text-primary">Grievances</span>
+                                    <span className="text-xs font-bold text-primary uppercase tracking-tight">Grievances</span>
+                                </Link>
+
+                                {/* 5. History */}
+                                <Link
+                                    href="/bills"
+                                    className="kiosk-card flex flex-col items-center text-center p-4 hover:border-cta border-2 border-transparent bg-white group"
+                                >
+                                    <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-slate-500 group-hover:text-white transition-colors">
+                                        <FileText className="w-5 h-5 text-slate-600 group-hover:text-white" />
+                                    </div>
+                                    <span className="text-xs font-bold text-primary uppercase tracking-tight">History</span>
+                                </Link>
+
+                                {/* 6. Support */}
+                                <Link
+                                    href="/support"
+                                    className="kiosk-card flex flex-col items-center text-center p-4 hover:border-cta border-2 border-transparent bg-white group"
+                                >
+                                    <div className="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center mb-2 group-hover:bg-purple-500 group-hover:text-white transition-colors">
+                                        <AlertCircle className="w-5 h-5 text-purple-600 group-hover:text-white" />
+                                    </div>
+                                    <span className="text-xs font-bold text-primary uppercase tracking-tight">Support</span>
                                 </Link>
                             </div>
                         </section>
@@ -285,29 +311,35 @@ export function ElectricityDashboard() {
                                     </Link>
                                 </div>
                             ) : (
-                                <div className="space-y-3">
-                                    <div className="kiosk-card flex flex-col md:flex-row md:items-center gap-4">
-                                        <div className="w-12 h-12 bg-electricity-light rounded-lg flex items-center justify-center flex-shrink-0">
-                                            <Zap className="w-6 h-6 text-electricity" />
+                                <div className="space-y-4">
+                                    {/* Connection Profile Card */}
+                                    <div className="kiosk-card flex flex-col md:flex-row md:items-center gap-4 bg-white p-6 shadow-sm border border-slate-100 rounded-2xl">
+                                        <div className="w-14 h-14 bg-electricity-light rounded-xl flex items-center justify-center flex-shrink-0">
+                                            <Zap className="w-7 h-7 text-electricity" />
                                         </div>
                                         <div className="flex-1">
-                                            <p className="font-medium text-primary">
-                                                Connection: {connection.connectionNo}
-                                            </p>
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <h3 className="font-bold text-primary text-xl">
+                                                    {connection.loadType} Connection
+                                                </h3>
+                                                <Badge variant="secondary" className="font-medium text-[10px] uppercase tracking-wider">
+                                                    {connection.phase || "Single Phase"}
+                                                </Badge>
+                                            </div>
                                             <p className="text-sm text-muted-foreground">{connection.address}</p>
-                                            <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
-                                                <span>Load: {connection.loadType}</span>
-                                                <span className="font-bold text-green-600">Balance: ₹{prepaidBalance.toFixed(2)}</span>
+                                            <div className="flex gap-4 mt-3 text-xs font-medium text-slate-600">
+                                                <span className="bg-slate-50 px-2 py-1 rounded">No: {connection.connectionNo}</span>
+                                                <span className="bg-green-50 px-2 py-1 rounded font-bold text-green-600">Balance: ₹{prepaidBalance.toFixed(2)}</span>
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-4">
+                                        <div className="flex items-center gap-6">
                                             {connection.lastReading && (
                                                 <div className="text-right">
-                                                    <p className="text-sm text-muted-foreground">Last Reading</p>
-                                                    <p className="font-medium">{connection.lastReading} units</p>
+                                                    <p className="text-xs text-muted-foreground">Last Reading</p>
+                                                    <p className="font-bold text-electricity">{connection.lastReading} units</p>
                                                 </div>
                                             )}
-                                            <Badge variant={connection.status === "ACTIVE" ? "default" : "secondary"}>
+                                            <Badge variant={connection.status === "ACTIVE" ? "default" : "secondary"} className="h-6">
                                                 {connection.status}
                                             </Badge>
                                         </div>
@@ -315,55 +347,55 @@ export function ElectricityDashboard() {
 
                                     {/* Consumption Chart */}
                                     {bills.length > 0 && (
-                                        <div className="mt-6">
+                                        <div className="mt-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
                                             <ConsumptionChart bills={bills} />
                                         </div>
                                     )}
 
                                     {/* Recent Bills */}
                                     {bills.length > 0 && (
-                                        <Card className="mt-6">
-                                            <CardHeader>
-                                                <div className="flex items-center justify-between">
-                                                    <CardTitle className="flex items-center gap-2">
-                                                        <FileText className="h-5 w-5 text-blue-500" />
-                                                        Recent Bills
-                                                    </CardTitle>
-                                                    <Link href="/bills">
-                                                        <Button variant="outline" size="sm">View All</Button>
-                                                    </Link>
+                                        <Card className="mt-8 overflow-hidden shadow-sm border-slate-200">
+                                            <CardHeader className="flex flex-row items-center justify-between border-b bg-slate-50/50 py-4">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm">
+                                                        <FileText className="h-4 w-4 text-blue-600" />
+                                                    </div>
+                                                    <CardTitle className="text-base font-bold">Recent Bills</CardTitle>
                                                 </div>
+                                                <Link href="/bills">
+                                                    <Button variant="outline" size="sm" className="text-xs">View All</Button>
+                                                </Link>
                                             </CardHeader>
-                                            <CardContent>
-                                                <div className="space-y-2">
+                                            <CardContent className="p-0">
+                                                <div className="divide-y divide-slate-100">
                                                     {bills.map((bill) => (
                                                         <div
                                                             key={bill.billNo}
-                                                            className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent/50 transition-colors"
+                                                            className="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors"
                                                         >
-                                                            <div className="flex-1">
-                                                                <div className="flex items-center gap-2">
-                                                                    <p className="font-medium text-sm">{bill.billNo}</p>
-                                                                    <Badge
-                                                                        variant={
-                                                                            bill.status === "PAID"
-                                                                                ? "default"
-                                                                                : bill.status === "PENDING"
-                                                                                    ? "destructive"
-                                                                                    : "secondary"
-                                                                        }
-                                                                        className="text-xs"
-                                                                    >
-                                                                        {bill.status}
-                                                                    </Badge>
+                                                            <div className="flex items-center gap-4">
+                                                                <div className="w-10 h-10 bg-electricity-light rounded-xl flex items-center justify-center text-electricity">
+                                                                    <Zap className="w-5 h-5" />
                                                                 </div>
-                                                                <p className="text-xs text-muted-foreground mt-1">
-                                                                    {new Date(bill.periodFrom).toLocaleDateString()} - {new Date(bill.periodTo).toLocaleDateString()} • {bill.unitsConsumed} units
-                                                                </p>
+                                                                <div>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span className="font-black text-primary text-sm tracking-tight">INV-{bill.billNo.split('-').pop()}</span>
+                                                                        <Badge
+                                                                            variant={bill.status === "PAID" ? "default" : "destructive"}
+                                                                            className="text-[10px] font-bold"
+                                                                        >
+                                                                            {bill.status}
+                                                                        </Badge>
+                                                                    </div>
+                                                                    <p className="text-[10px] text-muted-foreground mt-0.5 font-medium">
+                                                                        {new Date(bill.periodFrom).toLocaleDateString()} - {new Date(bill.periodTo).toLocaleDateString()}
+                                                                    </p>
+                                                                </div>
                                                             </div>
                                                             <div className="flex items-center gap-4">
                                                                 <div className="text-right">
-                                                                    <p className="font-bold text-lg">₹{bill.amount}</p>
+                                                                    <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest leading-none mb-1">{bill.unitsConsumed} units</p>
+                                                                    <p className="font-black text-lg text-primary leading-none">₹{bill.amount}</p>
                                                                 </div>
                                                                 <DownloadBillBtn bill={bill} connection={connection} />
                                                             </div>

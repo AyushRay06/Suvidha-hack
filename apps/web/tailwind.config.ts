@@ -10,53 +10,66 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // SUVIDHA Design System - Accessible & Ethical
+        // SUVIDHA Design System v2 - Kiosk Optimized
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
+
+        // Core colors
         primary: {
-          DEFAULT: "#0F172A", // Navy
+          DEFAULT: "hsl(var(--primary))",
+          light: "hsl(var(--primary-light))",
           foreground: "#FFFFFF",
         },
         secondary: {
-          DEFAULT: "#334155", // Slate
-          foreground: "#FFFFFF",
+          DEFAULT: "hsl(var(--secondary))",
+          foreground: "hsl(var(--secondary-foreground))",
         },
         cta: {
-          DEFAULT: "#0369A1", // Blue
+          DEFAULT: "hsl(var(--cta))",
+          light: "hsl(var(--cta-light))",
           foreground: "#FFFFFF",
         },
         muted: {
-          DEFAULT: "#F1F5F9",
-          foreground: "#64748B",
+          DEFAULT: "hsl(var(--muted))",
+          foreground: "hsl(var(--muted-foreground))",
         },
         accent: {
-          DEFAULT: "#F1F5F9",
-          foreground: "#0F172A",
+          DEFAULT: "hsl(var(--cta))",
+          foreground: "#FFFFFF",
         },
+
+        // Status colors
         destructive: {
-          DEFAULT: "#DC2626",
+          DEFAULT: "hsl(var(--destructive))",
           foreground: "#FFFFFF",
         },
         success: {
-          DEFAULT: "#16A34A",
+          DEFAULT: "hsl(var(--success))",
           foreground: "#FFFFFF",
         },
         warning: {
-          DEFAULT: "#D97706",
+          DEFAULT: "hsl(var(--warning))",
           foreground: "#FFFFFF",
         },
+        info: {
+          DEFAULT: "hsl(var(--info))",
+          foreground: "#FFFFFF",
+        },
+
+        // Card colors
         card: {
-          DEFAULT: "#FFFFFF",
-          foreground: "#020617",
+          DEFAULT: "hsl(var(--card))",
+          foreground: "hsl(var(--card-foreground))",
         },
         popover: {
           DEFAULT: "#FFFFFF",
-          foreground: "#020617",
+          foreground: "hsl(var(--foreground))",
         },
-        // Service-specific colors
+
+        // Service-specific colors (for utility/departmental distinction)
         electricity: {
           DEFAULT: "#F59E0B",
           light: "#FEF3C7",
@@ -75,21 +88,38 @@ const config: Config = {
         },
       },
       fontFamily: {
-        heading: ["EB Garamond", "serif"],
-        body: ["Lato", "sans-serif"],
+        heading: ["Poppins", "sans-serif"],
+        body: ["Inter", "sans-serif"],
+      },
+      fontSize: {
+        "xs-kiosk": "0.875rem",
+        "sm-kiosk": "1rem",
+        "base-kiosk": "1.125rem",
+        "lg-kiosk": "1.25rem",
+        "xl-kiosk": "1.5rem",
+        "2xl-kiosk": "1.875rem",
+        "3xl-kiosk": "2.25rem",
+        "4xl-kiosk": "3rem",
       },
       borderRadius: {
         lg: "0.75rem",
-        md: "0.5rem",
-        sm: "0.25rem",
+        xl: "1rem",
+        "2xl": "1.5rem",
+        "3xl": "2rem",
+        "full": "9999px",
       },
       boxShadow: {
         kiosk: "0 4px 20px rgba(0, 0, 0, 0.08)",
         "kiosk-hover": "0 8px 30px rgba(0, 0, 0, 0.12)",
+        "lg-kiosk": "0 10px 40px rgba(0, 0, 0, 0.15)",
+      },
+      spacing: {
+        kiosk: "1.5rem", // Standard kiosk spacing
       },
       animation: {
         "fade-in": "fadeIn 0.3s ease-out",
         "slide-up": "slideUp 0.3s ease-out",
+        "bounce-subtle": "bounceSubtle 2s infinite",
       },
       keyframes: {
         fadeIn: {
@@ -100,6 +130,18 @@ const config: Config = {
           "0%": { opacity: "0", transform: "translateY(10px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
+        bounceSubtle: {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-5px)" },
+        },
+      },
+      minHeight: {
+        kiosk: "60px",
+        "kiosk-lg": "80px",
+      },
+      minWidth: {
+        kiosk: "60px",
+        "kiosk-lg": "80px",
       },
     },
   },

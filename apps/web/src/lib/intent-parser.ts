@@ -255,7 +255,7 @@ export function parseIntent(input: string): ParsedIntent {
             // Fuzzy match
             for (const [keyword, service] of Object.entries(SERVICE_KEYWORDS)) {
                 const sim = similarity(token, keyword);
-                if (sim > 0.7) {
+                if (sim > 0.7 && service) {
                     serviceScores[service] = (serviceScores[service] || 0) + sim;
                     matchedKeywords.push(token);
                     break;
@@ -287,7 +287,7 @@ export function parseIntent(input: string): ParsedIntent {
         } else {
             for (const [keyword, action] of Object.entries(ACTION_KEYWORDS)) {
                 const sim = similarity(token, keyword);
-                if (sim > 0.7) {
+                if (sim > 0.7 && action) {
                     actionScores[action] = (actionScores[action] || 0) + sim;
                     if (!matchedKeywords.includes(token)) {
                         matchedKeywords.push(token);
@@ -301,7 +301,7 @@ export function parseIntent(input: string): ParsedIntent {
     // Check for multi-word phrases
     const inputLower = input.toLowerCase();
     for (const [keyword, action] of Object.entries(ACTION_KEYWORDS)) {
-        if (inputLower.includes(keyword)) {
+        if (inputLower.includes(keyword) && action) {
             actionScores[action] = (actionScores[action] || 0) + 1.5;
         }
     }
