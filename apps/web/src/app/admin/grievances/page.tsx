@@ -5,18 +5,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import {
-    LayoutDashboard,
-    Users,
-    CreditCard,
-    MessageSquare,
-    Bell,
-    BarChart3,
-    Monitor,
-    LogOut,
-    Building2,
     Zap,
     Flame,
     Droplets,
+    Building2,
     Clock,
     CheckCircle,
     AlertCircle,
@@ -25,10 +17,13 @@ import {
     Eye,
     ChevronRight,
     X,
+    Monitor,
+    RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuthStore } from "@/lib/store/auth";
+import { AdminSidebar } from "@/components/admin/AdminSidebar";
 
 interface Grievance {
     id: string;
@@ -37,6 +32,7 @@ interface Grievance {
     category: string;
     subject: string;
     description: string;
+    photoUrl?: string; // Cloudinary image URL
     priority: string;
     status: string;
     createdAt: string;
@@ -69,16 +65,6 @@ const priorityConfig: Record<string, { color: string; bg: string }> = {
     URGENT: { color: "text-destructive", bg: "bg-destructive/10" },
 };
 
-const navItems = [
-    { id: "dashboard", name: "Dashboard", icon: LayoutDashboard, href: "/admin" },
-    { id: "users", name: "Users", icon: Users, href: "/admin/users" },
-    { id: "payments", name: "Payments", icon: CreditCard, href: "/admin/payments" },
-    { id: "grievances", name: "Grievances", icon: MessageSquare, href: "/admin/grievances" },
-    { id: "reports", name: "Reports", icon: BarChart3, href: "/admin/reports" },
-    { id: "kiosks", name: "Kiosks", icon: Monitor, href: "/admin/kiosks" },
-    { id: "alerts", name: "Alerts", icon: Bell, href: "/admin/alerts" },
-];
-
 export default function AdminGrievancesPage() {
     const { i18n } = useTranslation();
     const router = useRouter();
@@ -92,7 +78,9 @@ export default function AdminGrievancesPage() {
     const [search, setSearch] = useState("");
     const [selectedGrievance, setSelectedGrievance] = useState<Grievance | null>(null);
     const [updating, setUpdating] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
 
+    // Initial fetch
     useEffect(() => {
         if (!isAuthenticated || (user?.role !== "ADMIN" && user?.role !== "STAFF")) {
             router.push("/auth/login");
@@ -101,7 +89,23 @@ export default function AdminGrievancesPage() {
         fetchGrievances();
     }, [isAuthenticated, user, router]);
 
-    const fetchGrievances = async () => {
+    // Auto-refresh every 30 seconds
+    useEffect(() => {
+        if (!isAuthenticated || (user?.role !== "ADMIN" && user?.role !== "STAFF")) {
+            return;
+        }
+
+        const interval = setInterval(() => {
+            fetchGrievances(true); // Silent refresh
+        }, 30000); // 30 seconds
+
+        return () => clearInterval(interval);
+    }, [isAuthenticated, user]);
+
+    const fetchGrievances = async (silent = false) => {
+        if (!silent) {
+            setLoading(true);
+        }
         try {
             const token = useAuthStore.getState().tokens?.accessToken;
             const res = await fetch(
@@ -124,8 +128,16 @@ export default function AdminGrievancesPage() {
         } catch (err) {
             console.error("Failed to fetch grievances:", err);
         } finally {
-            setLoading(false);
+            if (!silent) {
+                setLoading(false);
+            }
         }
+    };
+
+    const handleRefresh = async () => {
+        setRefreshing(true);
+        await fetchGrievances();
+        setRefreshing(false);
     };
 
     const updateStatus = async (grievanceId: string, newStatus: string) => {
@@ -145,9 +157,8 @@ export default function AdminGrievancesPage() {
             );
 
             if (res.ok) {
-                setGrievances(prev => prev.map(g =>
-                    g.id === grievanceId ? { ...g, status: newStatus } : g
-                ));
+                // Refresh the entire list to get latest data
+                await fetchGrievances(true);
                 setSelectedGrievance(null);
             }
         } catch (err) {
@@ -180,49 +191,7 @@ export default function AdminGrievancesPage() {
     return (
         <div className="min-h-screen bg-slate-100 flex">
             {/* Sidebar */}
-            <aside className="w-64 bg-primary text-white flex flex-col fixed h-full">
-                <div className="p-6 border-b border-white/10">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center">
-                            <Building2 className="w-6 h-6" />
-                        </div>
-                        <div>
-                            <h1 className="font-bold text-lg">SUVIDHA</h1>
-                            <p className="text-xs text-white/60">Admin Panel</p>
-                        </div>
-                    </div>
-                </div>
-
-                <nav className="flex-1 p-4 space-y-1">
-                    {navItems.map((item) => {
-                        const Icon = item.icon;
-                        const isActive = item.id === "grievances";
-                        return (
-                            <Link
-                                key={item.id}
-                                href={item.href}
-                                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive ? "bg-white/20 text-white" : "text-white/70 hover:bg-white/10"
-                                    }`}
-                            >
-                                <Icon className="w-5 h-5" />
-                                <span className="font-medium">{item.name}</span>
-                            </Link>
-                        );
-                    })}
-                </nav>
-
-                <div className="p-4 border-t border-white/10">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => { logout(); router.push("/"); }}
-                        className="w-full text-white/70 hover:text-white hover:bg-white/10"
-                    >
-                        <LogOut className="w-4 h-4 mr-2" />
-                        Logout
-                    </Button>
-                </div>
-            </aside>
+            <AdminSidebar activeId="grievances" />
 
             {/* Main Content */}
             <main className="flex-1 ml-64 overflow-auto">
@@ -282,8 +251,8 @@ export default function AdminGrievancesPage() {
                                     key={f.key}
                                     onClick={() => setFilter(f.key)}
                                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === f.key
-                                            ? "bg-primary text-white"
-                                            : "bg-white text-slate-600 hover:bg-slate-50 border"
+                                        ? "bg-primary text-white"
+                                        : "bg-white text-slate-600 hover:bg-slate-50 border"
                                         }`}
                                 >
                                     {f.label}
@@ -406,6 +375,23 @@ export default function AdminGrievancesPage() {
                                 <p className="text-sm text-muted-foreground">Description</p>
                                 <p className="text-sm">{selectedGrievance.description}</p>
                             </div>
+                            {selectedGrievance.photoUrl && (
+                                <div>
+                                    <p className="text-sm text-muted-foreground mb-2">Attached Image</p>
+                                    <div className="relative group">
+                                        <img
+                                            src={selectedGrievance.photoUrl}
+                                            alt="Grievance photo"
+                                            className="w-full h-48 object-cover rounded-lg border cursor-pointer hover:opacity-90 transition-opacity"
+                                            onClick={() => window.open(selectedGrievance.photoUrl, '_blank')}
+                                        />
+                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors rounded-lg flex items-center justify-center">
+                                            <Eye className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                                        </div>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground mt-1">Click to view full size</p>
+                                </div>
+                            )}
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <p className="text-sm text-muted-foreground">User</p>
@@ -429,8 +415,8 @@ export default function AdminGrievancesPage() {
                                             onClick={() => updateStatus(selectedGrievance.id, s)}
                                             disabled={updating || selectedGrievance.status === s}
                                             className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${selectedGrievance.status === s
-                                                    ? "bg-primary text-white"
-                                                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                                                ? "bg-primary text-white"
+                                                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                                                 }`}
                                         >
                                             {s.replace("_", " ")}

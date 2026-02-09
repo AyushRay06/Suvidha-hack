@@ -80,10 +80,16 @@ router.post('/readings', async (req: AuthReq, res, next) => {
         const meterReading = await prisma.meterReading.create({
             data: {
                 connectionId,
+                userId: req.user!.id,
+                serviceType: 'WATER',
                 reading,
+                previousReading,
+                consumption: unitsConsumed,
                 readingDate: new Date(),
                 submittedBy: 'CITIZEN',
-                imageUrl,
+                photoUrl: imageUrl,
+                status: 'PENDING',
+                isVerified: false,
             },
         });
 

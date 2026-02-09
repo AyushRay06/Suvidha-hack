@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuthStore } from "@/lib/store/auth";
+import { AdminSidebar } from "@/components/admin/AdminSidebar";
 
 interface Alert {
     id: string;
@@ -47,15 +48,7 @@ const severityConfig: Record<string, { icon: any; color: string; bg: string }> =
     success: { icon: CheckCircle, color: "text-success", bg: "bg-success/10" },
 };
 
-const navItems = [
-    { id: "dashboard", name: "Dashboard", icon: LayoutDashboard, href: "/admin" },
-    { id: "users", name: "Users", icon: Users, href: "/admin/users" },
-    { id: "payments", name: "Payments", icon: CreditCard, href: "/admin/payments" },
-    { id: "grievances", name: "Grievances", icon: MessageSquare, href: "/admin/grievances" },
-    { id: "reports", name: "Reports", icon: BarChart3, href: "/admin/reports" },
-    { id: "kiosks", name: "Kiosks", icon: Monitor, href: "/admin/kiosks" },
-    { id: "alerts", name: "Alerts", icon: Bell, href: "/admin/alerts" },
-];
+
 
 export default function AdminAlertsPage() {
     const { i18n } = useTranslation();
@@ -161,54 +154,10 @@ export default function AdminAlertsPage() {
     return (
         <div className="min-h-screen bg-slate-100 flex">
             {/* Sidebar */}
-            <aside className="w-64 bg-primary text-white flex flex-col">
-                <div className="p-6 border-b border-white/10">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center">
-                            <Building2 className="w-6 h-6" />
-                        </div>
-                        <div>
-                            <h1 className="font-bold text-lg">SUVIDHA</h1>
-                            <p className="text-xs text-white/60">Admin Panel</p>
-                        </div>
-                    </div>
-                </div>
-
-                <nav className="flex-1 p-4 space-y-1">
-                    {navItems.map((item) => {
-                        const Icon = item.icon;
-                        const isActive = item.id === "alerts";
-                        return (
-                            <Link
-                                key={item.id}
-                                href={item.href}
-                                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive
-                                        ? "bg-white/20 text-white"
-                                        : "text-white/70 hover:bg-white/10 hover:text-white"
-                                    }`}
-                            >
-                                <Icon className="w-5 h-5" />
-                                <span className="font-medium">{item.name}</span>
-                            </Link>
-                        );
-                    })}
-                </nav>
-
-                <div className="p-4 border-t border-white/10">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => { logout(); router.push("/"); }}
-                        className="w-full text-white/70 hover:text-white hover:bg-white/10"
-                    >
-                        <LogOut className="w-4 h-4 mr-2" />
-                        Logout
-                    </Button>
-                </div>
-            </aside>
+            <AdminSidebar activeId="alerts" />
 
             {/* Main Content */}
-            <main className="flex-1 overflow-auto">
+            <main className="flex-1 ml-64 overflow-auto">
                 <header className="bg-white border-b px-6 py-4">
                     <div className="flex items-center justify-between">
                         <div>

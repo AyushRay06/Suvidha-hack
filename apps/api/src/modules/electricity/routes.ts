@@ -47,13 +47,22 @@ router.post('/readings', async (req: AuthReq, res, next) => {
         }
 
         // Create meter reading
+        const previousReading = connection.lastReading || 0;
+        const consumption = reading - previousReading;
+
         const meterReading = await prisma.meterReading.create({
             data: {
                 connectionId,
+                userId: req.user!.id,
+                serviceType: 'ELECTRICITY',
                 reading,
+                previousReading,
+                consumption,
                 readingDate: new Date(),
                 submittedBy: 'CITIZEN',
-                imageUrl,
+                photoUrl: imageUrl,
+                status: 'PENDING',
+                isVerified: false,
             },
         });
 

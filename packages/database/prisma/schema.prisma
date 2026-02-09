@@ -109,6 +109,7 @@ model User {
   sessions        Session[]
   properties      Property[]
   civicComplaints CivicComplaint[]
+  meterReadings   MeterReading[] // Added for meter reading submissions
   // NEW: Added from master branch
   serviceRequests ServiceRequest[]
   sigmLogs        SIGMLog[]
@@ -175,19 +176,41 @@ model ServiceConnection {
   @@index([serviceType])
 }
 
+enum ReadingStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+  BILLED
+}
+
 model MeterReading {
-  id           String   @id @default(cuid())
-  connectionId String
-  reading      Float
-  readingDate  DateTime
-  submittedBy  String // "CITIZEN" or "STAFF"
-  imageUrl     String? // Photo of meter reading
-  isVerified   Boolean  @default(false)
-  createdAt    DateTime @default(now())
+  id              String        @id @default(cuid())
+  connectionId    String
+  userId          String
+  serviceType     ServiceType
+  reading         Float
+  previousReading Float?
+  consumption     Float? // Calculated: reading - previousReading
+  readingDate     DateTime      @default(now())
+  submittedBy     String // "CITIZEN" or "STAFF" or user ID
+  photoUrl        String? // Cloudinary URL for meter photo (renamed from imageUrl)
+  status          ReadingStatus @default(PENDING)
+  isVerified      Boolean       @default(false)
+  verifiedBy      String? // Admin/Staff user ID
+  verifiedAt      DateTime?
+  notes           String?
+  billGenerated   Boolean       @default(false)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
   connection ServiceConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([connectionId])
+  @@index([userId])
+  @@index([serviceType])
+  @@index([status])
+  @@index([readingDate])
 }
 
 // ============================================
@@ -253,29 +276,31 @@ model Payment {
 // ============================================
 
 model Grievance {
-  id           String            @id @default(cuid())
-  userId       String
-  connectionId String?
-  ticketNo     String            @unique
-  serviceType  ServiceType
-  category     String // e.g., "Billing Issue", "Outage", "New Connection"
-  subject      String
-  description  String
-  priority     GrievancePriority @default(MEDIUM)
-  status       GrievanceStatus   @default(SUBMITTED)
-  assignedTo   String? // Staff user ID
-  resolvedAt   DateTime?
-  resolution   String?
-  createdAt    DateTime          @default(now())
-  updatedAt    DateTime          @updatedAt
+  id            String   @id @default(uuid())
+  userId        String
+  connectionId  String?
+  serviceType   ServiceType
+  category      String
+  subject       String
+  description   String
+  photoUrl      String?  // Cloudinary image URL
+  priority      GrievancePriority @default(MEDIUM)
+  status        GrievanceStatus @default(SUBMITTED)
+  ticketNo      String   @unique
+  resolution    String?
+  resolvedAt    DateTime?
+  assignedTo    String?
+  kioskId       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  connection  ServiceConnection?  @relation(fields: [connectionId], references: [id])
-  timeline    GrievanceTimeline[]
-  attachments Document[]
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  connection    ServiceConnection? @relation(fields: [connectionId], references: [id], onDelete: SetNull)
+  timeline      GrievanceTimeline[]
+  attachments   Document[]
+  kiosk         Kiosk?   @relation(fields: [kioskId], references: [id], onDelete: SetNull)
 
   @@index([userId])
-  @@index([ticketNo])
   @@index([status])
   @@index([serviceType])
 }
@@ -378,7 +403,8 @@ model Kiosk {
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
-  logs KioskLog[]
+  logs       KioskLog[]
+  grievances Grievance[]
 
   @@index([isOnline])
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -61,6 +62,7 @@ const PRIORITIES = [
 ];
 
 export function GrievanceForm({ serviceType, connectionId, onSuccess }: GrievanceFormProps) {
+    const router = useRouter();
     const { tokens } = useAuthStore();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const config = SERVICE_CONFIG[serviceType];
@@ -119,41 +121,25 @@ export function GrievanceForm({ serviceType, connectionId, onSuccess }: Grievanc
         setUploading(true);
 
         try {
+            // Create preview
             const reader = new FileReader();
-            reader.onload = async (event) => {
-                const base64 = event.target?.result as string;
-                setImagePreview(base64);
-
-                const base64Data = base64.split(',')[1];
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-                const response = await fetch(`${apiUrl}/api/upload/image`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: `Bearer ${tokens?.accessToken}`,
-                    },
-                    body: JSON.stringify({
-                        filename: file.name,
-                        contentType: file.type,
-                        base64Data,
-                    }),
-                });
-
-                const data = await response.json();
-                if (data.success) {
-                    setImageUrl(data.data.url);
-                } else {
-                    throw new Error(data.error || 'Upload failed');
-                }
-                setUploading(false);
+            reader.onload = (event) => {
+                setImagePreview(event.target?.result as string);
             };
             reader.readAsDataURL(file);
+
+            // Upload to Cloudinary
+            const { uploadImageToCloudinary } = await import('@/lib/cloudinary');
+            const cloudinaryUrl = await uploadImageToCloudinary(file);
+            setImageUrl(cloudinaryUrl);
+            setUploading(false);
         } catch (err: any) {
             setError(err.message || 'Failed to upload image');
             setImagePreview(null);
             setUploading(false);
         }
     };
+
 
     const removeImage = () => {
         setImageUrl(null);
@@ -189,14 +175,15 @@ export function GrievanceForm({ serviceType, connectionId, onSuccess }: Grievanc
                     subject,
                     description,
                     priority,
+                    photoUrl: imageUrl || undefined, // Include Cloudinary URL if image was uploaded
                 }),
             });
 
             const data = await response.json();
 
             if (data.success) {
-                setSuccess(true);
-                setTicketNo(data.data.ticketNo);
+                // Redirect to success page with ticket number
+                router.push(`/grievances/success?ticket=${data.data.ticketNo}`);
             } else {
                 throw new Error(data.error || 'Failed to submit grievance');
             }

@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/lib/store/auth";
+import { AdminSidebar } from "@/components/admin/AdminSidebar";
 
 interface Kiosk {
     id: string;
@@ -40,15 +41,7 @@ interface Kiosk {
     version: string;
 }
 
-const navItems = [
-    { id: "dashboard", name: "Dashboard", icon: LayoutDashboard, href: "/admin" },
-    { id: "users", name: "Users", icon: Users, href: "/admin/users" },
-    { id: "payments", name: "Payments", icon: CreditCard, href: "/admin/payments" },
-    { id: "grievances", name: "Grievances", icon: MessageSquare, href: "/admin/grievances" },
-    { id: "reports", name: "Reports", icon: BarChart3, href: "/admin/reports" },
-    { id: "kiosks", name: "Kiosks", icon: Monitor, href: "/admin/kiosks" },
-    { id: "alerts", name: "Alerts", icon: Bell, href: "/admin/alerts" },
-];
+
 
 const statusConfig: Record<string, { color: string; bg: string; icon: any }> = {
     ONLINE: { color: "text-success", bg: "bg-success/10", icon: Wifi },
@@ -137,49 +130,7 @@ export default function AdminKiosksPage() {
     return (
         <div className="min-h-screen bg-slate-100 flex">
             {/* Sidebar */}
-            <aside className="w-64 bg-primary text-white flex flex-col fixed h-full">
-                <div className="p-6 border-b border-white/10">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center">
-                            <Building2 className="w-6 h-6" />
-                        </div>
-                        <div>
-                            <h1 className="font-bold text-lg">SUVIDHA</h1>
-                            <p className="text-xs text-white/60">Admin Panel</p>
-                        </div>
-                    </div>
-                </div>
-
-                <nav className="flex-1 p-4 space-y-1">
-                    {navItems.map((item) => {
-                        const Icon = item.icon;
-                        const isActive = item.id === "kiosks";
-                        return (
-                            <Link
-                                key={item.id}
-                                href={item.href}
-                                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive ? "bg-white/20 text-white" : "text-white/70 hover:bg-white/10"
-                                    }`}
-                            >
-                                <Icon className="w-5 h-5" />
-                                <span className="font-medium">{item.name}</span>
-                            </Link>
-                        );
-                    })}
-                </nav>
-
-                <div className="p-4 border-t border-white/10">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => { logout(); router.push("/"); }}
-                        className="w-full text-white/70 hover:text-white hover:bg-white/10"
-                    >
-                        <LogOut className="w-4 h-4 mr-2" />
-                        Logout
-                    </Button>
-                </div>
-            </aside>
+            <AdminSidebar activeId="kiosks" />
 
             {/* Main Content */}
             <main className="flex-1 ml-64 overflow-auto">

@@ -1,208 +1,74 @@
 "use client";
 
-import { useState, useRef } from "react";
-import Link from "next/link";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import {
-  ArrowLeft,
+  ChevronLeft,
   Zap,
   Flame,
   Droplets,
   Building2,
-  Upload,
-  Loader2,
-  CheckCircle,
-  Camera,
-  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useToast } from "@/components/ui/use-toast";
 import { useAuthStore } from "@/lib/store/auth";
+import { GrievanceForm } from "@/components/shared/grievance-form";
 
-const CATEGORIES = {
-  ELECTRICITY: [
-    "Billing Error",
-    "Power Outage",
-    "Meter Issue",
-    "Connection Request",
-    "Voltage Fluctuation",
-    "Other",
-  ],
-  GAS: [
-    "Billing Issue",
-    "Gas Leakage",
-    "Supply Problem",
-    "Cylinder Request",
-    "Meter Reading",
-    "Other",
-  ],
-  WATER: [
-    "Billing Issue",
-    "Low Pressure",
-    "Water Quality",
-    "Leakage",
-    "New Connection",
-    "Other",
-  ],
-  MUNICIPAL: [
-    "Waste Collection",
-    "Streetlight",
-    "Road Issue",
-    "Drainage",
-    "Public Health",
-    "Other",
-  ],
-};
-
-const PRIORITIES = [
-  { id: "LOW", name: "Low", color: "bg-slate-100 text-slate-600" },
-  { id: "MEDIUM", name: "Medium", color: "bg-amber-100 text-amber-700" },
-  { id: "HIGH", name: "High", color: "bg-orange-100 text-orange-700" },
-  { id: "CRITICAL", name: "Critical", color: "bg-red-100 text-red-700" },
+const serviceTypes = [
+  {
+    id: "ELECTRICITY",
+    name: "Electricity",
+    nameHi: "बिजली",
+    icon: Zap,
+    color: "text-electricity",
+    bg: "bg-electricity-light",
+    description: "Report electricity service issues",
+    descriptionHi: "बिजली सेवा समस्याओं की रिपोर्ट करें",
+  },
+  {
+    id: "GAS",
+    name: "Gas",
+    nameHi: "गैस",
+    icon: Flame,
+    color: "text-gas",
+    bg: "bg-gas-light",
+    description: "Report gas service issues",
+    descriptionHi: "गैस सेवा समस्याओं की रिपोर्ट करें",
+  },
+  {
+    id: "WATER",
+    name: "Water",
+    nameHi: "जल",
+    icon: Droplets,
+    color: "text-water",
+    bg: "bg-water-light",
+    description: "Report water service issues",
+    descriptionHi: "जल सेवा समस्याओं की रिपोर्ट करें",
+  },
+  {
+    id: "MUNICIPAL",
+    name: "Municipal",
+    nameHi: "नगरपालिका",
+    icon: Building2,
+    color: "text-municipal",
+    bg: "bg-municipal-light",
+    description: "Report civic issues",
+    descriptionHi: "नागरिक समस्याओं की रिपोर्ट करें",
+  },
 ];
 
 export default function NewGrievancePage() {
-  const { t } = useTranslation();
+  const { i18n } = useTranslation();
   const router = useRouter();
-  const { toast } = useToast();
-  const { isAuthenticated, tokens } = useAuthStore();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { isAuthenticated } = useAuthStore();
+  const isHindi = i18n.language === "hi";
 
-  const [loading, setLoading] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [step, setStep] = useState(1);
+  const [selectedService, setSelectedService] = useState<string>("");
 
-  const [formData, setFormData] = useState({
-    serviceType: "",
-    category: "",
-    subject: "",
-    description: "",
-    priority: "MEDIUM",
-    address: "",
-    connectionNumber: "",
-  });
-
-  const serviceTypes = [
-    { id: "ELECTRICITY", name: "Electricity", icon: Zap, color: "bg-electricity-light text-electricity" },
-    { id: "GAS", name: "Gas", icon: Flame, color: "bg-gas-light text-gas" },
-    { id: "WATER", name: "Water", icon: Droplets, color: "bg-water-light text-water" },
-    { id: "MUNICIPAL", name: "Municipal", icon: Building2, color: "bg-municipal-light text-municipal" },
-  ];
-
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.match(/^image\/(jpeg|jpg|png|gif|webp)$/)) {
-      toast({ title: "Invalid file", description: "Please select JPEG, PNG, GIF or WebP", variant: "destructive" });
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      toast({ title: "File too large", description: "Image must be less than 5MB", variant: "destructive" });
-      return;
-    }
-
-    setUploading(true);
-
-    try {
-      const reader = new FileReader();
-      reader.onload = async (event) => {
-        const base64 = event.target?.result as string;
-        setImagePreview(base64);
-
-        const base64Data = base64.split(',')[1];
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-        const response = await fetch(`${apiUrl}/api/upload/image`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${tokens?.accessToken}`,
-          },
-          body: JSON.stringify({
-            filename: file.name,
-            contentType: file.type,
-            base64Data,
-          }),
-        });
-
-        const data = await response.json();
-        if (data.success) {
-          setImageUrl(data.data.url);
-          toast({ title: "Photo uploaded", description: "Image attached successfully" });
-        } else {
-          throw new Error(data.error || 'Upload failed');
-        }
-        setUploading(false);
-      };
-      reader.readAsDataURL(file);
-    } catch (err: any) {
-      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
-      setImagePreview(null);
-      setUploading(false);
-    }
-  };
-
-  const removeImage = () => {
-    setImageUrl(null);
-    setImagePreview(null);
-    if (fileInputRef.current) fileInputRef.current.value = '';
-  };
-
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!formData.serviceType || !formData.category || !formData.subject || !formData.description) {
-      toast({
-        title: "Missing Fields",
-        description: "Please fill all required fields",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/grievances`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${tokens?.accessToken}`,
-          },
-          body: JSON.stringify(formData),
-        }
-      );
-
-      const data = await res.json();
-
-      if (data.success) {
-        setSuccess(data.data.ticketNumber);
-        toast({
-          title: "Grievance Submitted!",
-          description: `Ticket #${data.data.ticketNumber} created`,
-          variant: "success",
-        });
-      } else {
-        throw new Error(data.error || "Submission failed");
-      }
-    } catch (error: any) {
-      toast({
-        title: "Submission Failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
+  const handleServiceSelect = (serviceId: string) => {
+    setSelectedService(serviceId);
+    setStep(2);
   };
 
   if (!isAuthenticated) {
@@ -210,250 +76,83 @@ export default function NewGrievancePage() {
     return null;
   }
 
-  // Success State
-  if (success) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white flex flex-col">
-        <header className="bg-success text-white py-4 px-6">
-          <div className="max-w-md mx-auto text-center">
-            <CheckCircle className="w-12 h-12 mx-auto mb-2" />
-            <h1 className="font-heading text-xl font-bold">Grievance Submitted!</h1>
-          </div>
-        </header>
-
-        <div className="flex-1 p-6 max-w-md mx-auto w-full flex flex-col items-center justify-center">
-          <div className="bg-white rounded-xl shadow-kiosk p-8 text-center mb-6 w-full">
-            <p className="text-muted-foreground text-sm mb-2">Your Ticket Number</p>
-            <p className="font-mono text-3xl text-primary font-bold mb-4">#{success}</p>
-            <p className="text-sm text-muted-foreground">
-              Save this number to track your complaint status
-            </p>
-          </div>
-
-          <div className="space-y-3 w-full">
-            <Link href={`/grievances`}>
-              <Button variant="cta" size="xl" className="w-full">
-                View My Grievances
-              </Button>
-            </Link>
-            <Link href="/dashboard">
-              <Button variant="outline" size="xl" className="w-full">
-                Back to Dashboard
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       {/* Header */}
       <header className="bg-primary text-white py-4 px-6">
-        <div className="max-w-2xl mx-auto flex items-center gap-4">
-          <Link href="/grievances" className="hover:opacity-80">
-            <ArrowLeft className="w-6 h-6" />
-          </Link>
+        <div className="max-w-4xl mx-auto flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => (step > 1 ? setStep(1) : router.back())}
+            className="text-white hover:bg-white/10"
+          >
+            <ChevronLeft className="w-6 h-6" />
+          </Button>
           <div>
-            <h1 className="font-heading text-xl font-bold">{t("grievance.newGrievance")}</h1>
-            <p className="text-white/80 text-sm">File a new complaint</p>
+            <h1 className="font-heading text-xl font-bold">
+              {isHindi ? "नई शिकायत दर्ज करें" : "Register New Grievance"}
+            </h1>
+            <p className="text-white/70 text-sm">
+              {isHindi ? `चरण ${step} का 2` : `Step ${step} of 2`}
+            </p>
           </div>
         </div>
       </header>
 
-      <form onSubmit={handleSubmit} className="max-w-2xl mx-auto p-6 space-y-6">
-        {/* Service Type */}
-        <div>
-          <Label className="text-base mb-3 block">Select Service *</Label>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {serviceTypes.map((svc) => (
-              <button
-                key={svc.id}
-                type="button"
-                onClick={() => setFormData({ ...formData, serviceType: svc.id, category: "" })}
-                className={`p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all cursor-pointer ${formData.serviceType === svc.id
-                  ? "border-cta bg-cta/5"
-                  : "border-slate-200 hover:border-cta/50"
-                  }`}
-              >
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${svc.color}`}>
-                  <svc.icon className="w-5 h-5" />
-                </div>
-                <span className="text-sm font-medium">{svc.name}</span>
-              </button>
-            ))}
-          </div>
+      <div className="max-w-4xl mx-auto px-6 py-8">
+        {/* Progress Bar */}
+        <div className="flex items-center gap-2 mb-8">
+          {[1, 2].map((s) => (
+            <div
+              key={s}
+              className={`h-2 flex-1 rounded-full transition-all ${s <= step ? "bg-cta" : "bg-slate-200"
+                }`}
+            />
+          ))}
         </div>
 
-        {/* Category */}
-        {formData.serviceType && (
+        {/* Step 1: Select Service */}
+        {step === 1 && (
           <div>
-            <Label className="text-base mb-3 block">{t("grievance.category")} *</Label>
-            <div className="flex flex-wrap gap-2">
-              {CATEGORIES[formData.serviceType as keyof typeof CATEGORIES]?.map((cat) => (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => setFormData({ ...formData, category: cat })}
-                  className={`px-4 py-2 rounded-lg text-sm transition-colors cursor-pointer ${formData.category === cat
-                    ? "bg-cta text-white"
-                    : "bg-white border border-slate-200 hover:border-cta"
-                    }`}
-                >
-                  {cat}
-                </button>
-              ))}
+            <h2 className="text-lg font-medium text-primary mb-4">
+              {isHindi ? "सेवा प्रकार चुनें" : "Select Service Type"}
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {serviceTypes.map((service) => {
+                const Icon = service.icon;
+                return (
+                  <button
+                    key={service.id}
+                    onClick={() => handleServiceSelect(service.id)}
+                    className="kiosk-card flex items-start gap-4 text-left hover:border-cta border-2 border-transparent transition-all"
+                  >
+                    <div className={`w-14 h-14 ${service.bg} rounded-xl flex items-center justify-center`}>
+                      <Icon className={`w-7 h-7 ${service.color}`} />
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-primary text-lg">
+                        {isHindi ? service.nameHi : service.name}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        {isHindi ? service.descriptionHi : service.description}
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
 
-        {/* Priority */}
-        <div>
-          <Label className="text-base mb-3 block">{t("grievance.priority")}</Label>
-          <div className="flex flex-wrap gap-2">
-            {PRIORITIES.map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => setFormData({ ...formData, priority: p.id })}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${formData.priority === p.id
-                  ? `${p.color} ring-2 ring-offset-2 ring-cta/30`
-                  : "bg-white border border-slate-200 hover:border-cta"
-                  }`}
-              >
-                {p.name}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Subject */}
-        <div>
-          <Label htmlFor="subject" className="text-base">
-            {t("grievance.subject")} *
-          </Label>
-          <Input
-            id="subject"
-            placeholder="Brief summary of your issue"
-            value={formData.subject}
-            onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-            className="mt-2"
-            required
+        {/* Step 2: Grievance Form */}
+        {step === 2 && selectedService && (
+          <GrievanceForm
+            serviceType={selectedService as any}
+            onSuccess={() => router.push("/dashboard")}
           />
-        </div>
-
-        {/* Description */}
-        <div>
-          <Label htmlFor="description" className="text-base">
-            {t("grievance.description")} *
-          </Label>
-          <textarea
-            id="description"
-            placeholder="Describe your issue in detail..."
-            value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            className="mt-2 w-full h-32 px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-cta focus:ring-2 focus:ring-cta/20 outline-none transition-colors resize-none"
-            required
-          />
-        </div>
-
-        {/* Connection Number (Optional) */}
-        <div>
-          <Label htmlFor="connectionNumber" className="text-base">
-            Connection Number (Optional)
-          </Label>
-          <Input
-            id="connectionNumber"
-            placeholder="Enter if applicable"
-            value={formData.connectionNumber}
-            onChange={(e) => setFormData({ ...formData, connectionNumber: e.target.value })}
-            className="mt-2"
-          />
-        </div>
-
-        {/* Address */}
-        <div>
-          <Label htmlFor="address" className="text-base">
-            Location/Address
-          </Label>
-          <Input
-            id="address"
-            placeholder="Where is the issue located?"
-            value={formData.address}
-            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-            className="mt-2"
-          />
-        </div>
-
-        {/* Photo Upload */}
-        <div>
-          <Label className="text-base mb-3 block">Attach Photo (Optional)</Label>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/jpeg,image/png,image/gif,image/webp"
-            onChange={handleFileSelect}
-            className="hidden"
-          />
-
-          {imagePreview ? (
-            <div className="relative rounded-xl overflow-hidden border-2 border-slate-200">
-              <img
-                src={imagePreview}
-                alt="Preview"
-                className="w-full h-48 object-cover"
-              />
-              <button
-                type="button"
-                onClick={removeImage}
-                className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 shadow-lg"
-              >
-                <X className="w-4 h-4" />
-              </button>
-              {uploading && (
-                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                  <Loader2 className="w-8 h-8 text-white animate-spin" />
-                </div>
-              )}
-              {imageUrl && (
-                <div className="absolute bottom-2 left-2 bg-green-500 text-white text-xs px-3 py-1 rounded-full flex items-center gap-1">
-                  <CheckCircle className="w-3 h-3" /> Uploaded
-                </div>
-              )}
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="w-full border-2 border-dashed border-slate-300 rounded-xl p-6 text-center text-muted-foreground hover:border-cta hover:bg-cta/5 transition-colors cursor-pointer"
-            >
-              <Camera className="w-10 h-10 mx-auto mb-2 text-slate-400" />
-              <p className="font-medium">Click to add photo</p>
-              <p className="text-sm mt-1">JPEG, PNG, GIF or WebP (max 5MB)</p>
-            </button>
-          )}
-        </div>
-
-        {/* Submit */}
-        <Button
-          type="submit"
-          variant="cta"
-          size="xl"
-          className="w-full"
-          disabled={loading || uploading || !formData.serviceType || !formData.category || !formData.subject || !formData.description}
-        >
-          {loading ? (
-            <>
-              <Loader2 className="w-5 h-5 animate-spin mr-2" />
-              Submitting...
-            </>
-          ) : (
-            t("grievance.submit")
-          )}
-        </Button>
-      </form>
+        )}
+      </div>
     </div>
   );
 }
-

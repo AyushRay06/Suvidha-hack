@@ -228,6 +228,73 @@ router.put('/alerts/:id/deactivate', async (req: AuthReq, res, next) => {
   }
 });
 
+// Get all connections (Admin)
+router.get('/connections', async (req: AuthReq, res, next) => {
+  try {
+    const { search, status, serviceType, page = '1', limit = '10' } = req.query;
+
+    const where: any = {};
+
+    // Filter by status
+    if (status && status !== 'all') {
+      where.status = status as string;
+    }
+
+    // Filter by service type
+    if (serviceType && serviceType !== 'all') {
+      where.serviceType = serviceType as string;
+    }
+
+    // Search functionality
+    if (search) {
+      where.OR = [
+        { connectionNo: { contains: search as string, mode: 'insensitive' } },
+        { meterNo: { contains: search as string, mode: 'insensitive' } },
+        { user: { name: { contains: search as string, mode: 'insensitive' } } },
+        { user: { phone: { contains: search as string } } },
+      ];
+    }
+
+    const [connections, total] = await Promise.all([
+      prisma.serviceConnection.findMany({
+        where,
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              phone: true,
+            },
+          },
+          _count: {
+            select: {
+              bills: true,
+              meterReadings: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: (parseInt(page as string) - 1) * parseInt(limit as string),
+        take: parseInt(limit as string),
+      }),
+      prisma.serviceConnection.count({ where }),
+    ]);
+
+    res.json({
+      success: true,
+      data: connections,
+      pagination: {
+        page: parseInt(page as string),
+        limit: parseInt(limit as string),
+        total,
+        totalPages: Math.ceil(total / parseInt(limit as string)),
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // Get all users (for staff)
 router.get('/users', async (req: AuthReq, res, next) => {
   try {
@@ -274,6 +341,109 @@ router.get('/users', async (req: AuthReq, res, next) => {
         total,
         totalPages: Math.ceil(total / parseInt(limit as string)),
       },
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// ============================================
+// METER READINGS MANAGEMENT
+// ============================================
+
+// Get all meter readings (Admin)
+router.get('/meter-readings', async (req: AuthReq, res, next) => {
+  try {
+    const { status, serviceType, page = '1', limit = '100' } = req.query;
+
+    const where: any = {};
+    if (status && status !== 'ALL') where.status = status as string;
+    if (serviceType && serviceType !== 'ALL') where.serviceType = serviceType as string;
+
+    const [readings, total] = await Promise.all([
+      prisma.meterReading.findMany({
+        where,
+        include: {
+          user: { select: { name: true, phone: true } },
+          connection: { select: { connectionNo: true, serviceType: true, address: true } },
+        },
+        orderBy: { readingDate: 'desc' },
+        skip: (parseInt(page as string) - 1) * parseInt(limit as string),
+        take: parseInt(limit as string),
+      }),
+      prisma.meterReading.count({ where }),
+    ]);
+
+    res.json({
+      success: true,
+      data: readings,
+      pagination: {
+        page: parseInt(page as string),
+        limit: parseInt(limit as string),
+        total,
+        totalPages: Math.ceil(total / parseInt(limit as string)),
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Verify meter reading
+router.post('/meter-readings/:id/verify', async (req: AuthReq, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const reading = await prisma.meterReading.update({
+      where: { id },
+      data: {
+        status: 'VERIFIED',
+        isVerified: true,
+        verifiedBy: req.user!.id,
+        verifiedAt: new Date(),
+        notes: 'Reading verified by admin',
+      },
+      include: {
+        user: { select: { name: true, phone: true } },
+        connection: { select: { connectionNo: true, serviceType: true } },
+      },
+    });
+
+    res.json({
+      success: true,
+      data: reading,
+      message: 'Meter reading verified successfully',
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Reject meter reading
+router.post('/meter-readings/:id/reject', async (req: AuthReq, res, next) => {
+  try {
+    const { id } = req.params;
+    const { reason } = req.body;
+
+    const reading = await prisma.meterReading.update({
+      where: { id },
+      data: {
+        status: 'REJECTED',
+        isVerified: false,
+        verifiedBy: req.user!.id,
+        verifiedAt: new Date(),
+        notes: reason || 'Reading rejected by admin',
+      },
+      include: {
+        user: { select: { name: true, phone: true } },
+        connection: { select: { connectionNo: true, serviceType: true } },
+      },
+    });
+
+    res.json({
+      success: true,
+      data: reading,
+      message: 'Meter reading rejected successfully',
     });
   } catch (error) {
     next(error);
