@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@repo/database";
+import { prisma } from "@suvidha/database";
 import { verifyToken } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {

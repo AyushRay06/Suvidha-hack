@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ import {
     Gauge
 } from "lucide-react";
 import { useAuthStore } from "@/lib/store/auth";
+import { LanguageToggle } from "@/components/ui/language-toggle";
 import { GasBookingDialog } from "@/components/gas/booking-dialog";
 import { GasConsumptionChart } from "./gas-consumption-chart";
 import { DownloadGasBillBtn } from "./download-gas-bill-btn";
@@ -62,6 +64,7 @@ interface Bill {
 
 export function GasDashboard() {
     const router = useRouter();
+    const { t } = useTranslation();
     const { tokens, isAuthenticated } = useAuthStore();
     const { toast } = useToast();
 
@@ -158,7 +161,7 @@ export function GasDashboard() {
             <div className="min-h-screen bg-slate-50 flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4">
                     <div className="w-12 h-12 border-4 border-gas border-t-transparent rounded-full animate-spin"></div>
-                    <p className="text-muted-foreground animate-pulse font-medium">Loading Gas Services...</p>
+                    <p className="text-muted-foreground animate-pulse font-medium">{t("common.loading")}</p>
                 </div>
             </div>
         );
@@ -171,19 +174,22 @@ export function GasDashboard() {
             {/* Header - Aligned with Electricity */}
             <header className="bg-gas-light py-6">
                 <div className="max-w-4xl mx-auto px-6">
-                    <div className="flex items-center gap-4 mb-4">
-                        <Link href="/dashboard" className="hover:opacity-80">
-                            <ArrowLeft className="w-6 h-6 text-gas" />
-                        </Link>
-                        <div className="w-14 h-14 bg-white/50 rounded-xl flex items-center justify-center shadow-sm">
-                            <Flame className="w-8 h-8 text-gas" />
+                    <div className="flex items-center justify-between gap-4 mb-4">
+                        <div className="flex items-center gap-4">
+                            <Link href="/dashboard" className="hover:opacity-80">
+                                <ArrowLeft className="w-6 h-6 text-gas" />
+                            </Link>
+                            <div className="w-14 h-14 bg-white/50 rounded-xl flex items-center justify-center shadow-sm">
+                                <Flame className="w-8 h-8 text-gas" />
+                            </div>
+                            <div>
+                                <h1 className="font-heading text-2xl font-bold text-gas">
+                                    {t("services.gas")}
+                                </h1>
+                                <p className="text-slate-600 text-sm">{t("services.gasDesc")}</p>
+                            </div>
                         </div>
-                        <div>
-                            <h1 className="font-heading text-2xl font-bold text-gas">
-                                Gas Services
-                            </h1>
-                            <p className="text-slate-600 text-sm">Manage your LPG and Piped Gas services</p>
-                        </div>
+                        <LanguageToggle variant="gas" />
                     </div>
                 </div>
             </header>
@@ -195,21 +201,21 @@ export function GasDashboard() {
                         <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5" />
                         <div className="flex-1">
                             <p className="font-medium text-amber-800">
-                                {pendingBills.length} pending bill{pendingBills.length > 1 ? "s" : ""}
+                                {pendingBills.length} {t("bills.pendingBills")}
                             </p>
                             <p className="text-sm text-amber-700">
-                                Total: ₹{pendingBills.reduce((sum, b) => sum + b.amount, 0).toLocaleString()}
+                                {t("bills.totalAmount")}: ₹{pendingBills.reduce((sum, b) => sum + b.amount, 0).toLocaleString()}
                             </p>
                         </div>
                         <Link href="/bills">
-                            <Button size="sm" variant="cta">Pay Now</Button>
+                            <Button size="sm" variant="cta">{t("bills.payNow")}</Button>
                         </Link>
                     </div>
                 )}
 
                 {/* Quick Actions Grid - Standardized with 6 Primary Actions */}
                 <section className="mb-8">
-                    <h2 className="font-heading text-lg text-primary mb-4">Quick Actions</h2>
+                    <h2 className="font-heading text-lg text-primary mb-4">{t("dashboard.quickActions")}</h2>
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                         {/* 1. Pay Bill - Always Visible */}
                         <Link
@@ -219,7 +225,7 @@ export function GasDashboard() {
                             <div className="w-10 h-10 bg-gas-light rounded-lg flex items-center justify-center mb-2 group-hover:bg-gas group-hover:text-white transition-colors">
                                 <IndianRupee className="w-5 h-5 text-gas group-hover:text-white" />
                             </div>
-                            <span className="text-xs font-bold text-primary uppercase tracking-tight">Pay Bill</span>
+                            <span className="text-xs font-bold text-primary uppercase tracking-tight">{t("gas.payBill")}</span>
                         </Link>
 
                         {/* 2. Submit Reading - Always Visible */}
@@ -230,7 +236,7 @@ export function GasDashboard() {
                             <div className="w-10 h-10 bg-amber-50 rounded-lg flex items-center justify-center mb-2 group-hover:bg-amber-500 group-hover:text-white transition-colors">
                                 <FileText className="w-5 h-5 text-amber-600 group-hover:text-white" />
                             </div>
-                            <span className="text-xs font-bold text-primary uppercase tracking-tight">Submit Reading</span>
+                            <span className="text-xs font-bold text-primary uppercase tracking-tight">{t("gas.submitReading")}</span>
                         </Link>
 
                         {/* 3. Book Cylinder / Refill */}
@@ -242,7 +248,7 @@ export function GasDashboard() {
                                 <Flame className="w-5 h-5 text-orange-600 group-hover:text-white" />
                             </div>
                             <span className="text-xs font-bold text-primary uppercase tracking-tight">
-                                {connection?.cylinders ? "Book Refill" : "New Booking"}
+                                {connection?.cylinders ? t("gas.bookCylinder") : t("gas.bookCylinder")}
                             </span>
                         </div>
 
@@ -254,7 +260,7 @@ export function GasDashboard() {
                             <div className="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center mb-2 group-hover:bg-red-500 group-hover:text-white transition-colors">
                                 <AlertCircle className="w-5 h-5 text-red-600 group-hover:text-white" />
                             </div>
-                            <span className="text-xs font-bold text-primary uppercase tracking-tight">Grievances</span>
+                            <span className="text-xs font-bold text-primary uppercase tracking-tight">{t("actions.grievances")}</span>
                         </Link>
 
                         {/* 5. History */}
@@ -265,7 +271,7 @@ export function GasDashboard() {
                             <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-slate-500 group-hover:text-white transition-colors">
                                 <History className="w-5 h-5 text-slate-600 group-hover:text-white" />
                             </div>
-                            <span className="text-xs font-bold text-primary uppercase tracking-tight">History</span>
+                            <span className="text-xs font-bold text-primary uppercase tracking-tight">{t("gas.viewHistory")}</span>
                         </Link>
 
                         {/* 6. Support */}
@@ -276,7 +282,7 @@ export function GasDashboard() {
                             <div className="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center mb-2 group-hover:bg-red-500 group-hover:text-white transition-colors">
                                 <AlertCircle className="w-5 h-5 text-red-600 group-hover:text-white" />
                             </div>
-                            <span className="text-xs font-bold text-primary uppercase tracking-tight">Support</span>
+                            <span className="text-xs font-bold text-primary uppercase tracking-tight">{t("help.title")}</span>
                         </Link>
                     </div>
                 </section>
@@ -284,11 +290,11 @@ export function GasDashboard() {
                 {/* My Connections Section */}
                 <section>
                     <div className="flex items-center justify-between mb-4">
-                        <h2 className="font-heading text-lg text-primary">My Connections</h2>
+                        <h2 className="font-heading text-lg text-primary">{t("dashboard.myConnections")}</h2>
                         <Link href="/connections/new?serviceType=GAS">
                             <Button variant="outline" size="sm">
                                 <Plus className="w-4 h-4 mr-2" />
-                                New Connection
+                                {t("gas.newConnection")}
                             </Button>
                         </Link>
                     </div>
@@ -296,9 +302,9 @@ export function GasDashboard() {
                     {!connection ? (
                         <div className="text-center py-8">
                             <Flame className="w-12 h-12 mx-auto text-slate-300 mb-4" />
-                            <p className="text-muted-foreground mb-4">No gas connections yet</p>
+                            <p className="text-muted-foreground mb-4">{t("connections.noConnections")}</p>
                             <Link href="/connections/new?serviceType=GAS">
-                                <Button variant="cta">Apply for New Connection</Button>
+                                <Button variant="cta">{t("gas.newConnection")}</Button>
                             </Link>
                         </div>
                     ) : (

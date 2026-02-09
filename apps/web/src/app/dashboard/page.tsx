@@ -101,7 +101,7 @@ export default function DashboardPage() {
     { id: "bills", name: t("actions.payBills"), icon: FileText, href: "/bills", count: pendingBills.length },
     { id: "grievances", name: t("actions.grievances"), icon: MessageSquare, href: "/grievances" },
     { id: "notifications", name: t("actions.notifications"), icon: Bell, href: "/notifications" },
-    { id: "profile", name: "My Profile", icon: User, href: "/profile" },
+    { id: "profile", name: t("actions.myProfile"), icon: User, href: "/profile" },
   ];
 
   if (!isAuthenticated) return null;
@@ -113,7 +113,7 @@ export default function DashboardPage() {
         <div className="max-w-full mx-auto flex items-center justify-between gap-4">
           <div className="flex-1 min-w-0">
             <p className={`text-white/70 ${typeof window !== 'undefined' && window.innerWidth >= 1024 ? 'text-base' : 'text-xs'}`}>
-              Welcome back,
+              {t("dashboard.welcomeBack")},
             </p>
             <h1 className={`font-heading font-bold text-white truncate ${typeof window !== 'undefined' && window.innerWidth >= 1024 ? 'text-3xl' : 'text-2xl'}`}>
               {user?.name}
@@ -141,7 +141,7 @@ export default function DashboardPage() {
             <AlertCircle className="w-6 h-6 lg:w-8 lg:h-8 flex-shrink-0 mt-1" />
             <div className="flex-1">
               <p className={`font-bold text-yellow-900 ${typeof window !== 'undefined' && window.innerWidth >= 1024 ? 'text-lg' : 'text-base'}`}>
-                You have {pendingBills.length} pending bill{pendingBills.length > 1 ? "s" : ""}
+                {t("dashboard.pendingBillsAlert", { count: pendingBills.length })}
               </p>
               <p className={`text-yellow-800 mt-1 ${typeof window !== 'undefined' && window.innerWidth >= 1024 ? 'text-base' : 'text-sm'}`}>
                 Total: ₹{pendingBills.reduce((sum, b) => sum + b.amount, 0).toLocaleString()}
@@ -149,7 +149,7 @@ export default function DashboardPage() {
             </div>
             <Link href="/bills" className="flex-shrink-0">
               <Button size="sm" variant="cta" className="kiosk-button text-sm lg:text-base">
-                Pay Now
+                {t("bills.payNow")}
               </Button>
             </Link>
           </div>
@@ -158,7 +158,7 @@ export default function DashboardPage() {
         {/* Select a Service */}
         <section className="mb-12 lg:mb-16">
           <div className="section-header mb-8">
-            Select a Service
+            {t("dashboard.selectService")}
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
             {/* Electricity */}
@@ -171,10 +171,10 @@ export default function DashboardPage() {
               </div>
               <div>
                 <h3 className={`font-semibold text-primary mb-1 ${typeof window !== 'undefined' && window.innerWidth >= 1024 ? 'text-lg' : 'text-base'}`}>
-                  Electricity
+                  {t("services.electricity")}
                 </h3>
                 <p className={`text-muted-foreground line-clamp-2 ${typeof window !== 'undefined' && window.innerWidth >= 1024 ? 'text-sm' : 'text-xs'}`}>
-                  Pay bills, new connections, meter reading
+                  {t("services.electricityDesc")}
                 </p>
               </div>
             </Link>
@@ -189,10 +189,10 @@ export default function DashboardPage() {
               </div>
               <div>
                 <h3 className={`font-semibold text-primary mb-1 ${typeof window !== 'undefined' && window.innerWidth >= 1024 ? 'text-lg' : 'text-base'}`}>
-                  Gas
+                  {t("services.gas")}
                 </h3>
                 <p className={`text-muted-foreground line-clamp-2 ${typeof window !== 'undefined' && window.innerWidth >= 1024 ? 'text-sm' : 'text-xs'}`}>
-                  Bill payments, cylinder booking
+                  {t("services.gasDesc")}
                 </p>
               </div>
             </Link>
@@ -207,10 +207,10 @@ export default function DashboardPage() {
               </div>
               <div>
                 <h3 className={`font-semibold text-primary mb-1 ${typeof window !== 'undefined' && window.innerWidth >= 1024 ? 'text-lg' : 'text-base'}`}>
-                  Water
+                  {t("services.water")}
                 </h3>
                 <p className={`text-muted-foreground line-clamp-2 ${typeof window !== 'undefined' && window.innerWidth >= 1024 ? 'text-sm' : 'text-xs'}`}>
-                  Pay bills, report leakage
+                  {t("services.waterDesc")}
                 </p>
               </div>
             </Link>
@@ -225,10 +225,10 @@ export default function DashboardPage() {
               </div>
               <div>
                 <h3 className={`font-semibold text-primary mb-1 ${typeof window !== 'undefined' && window.innerWidth >= 1024 ? 'text-lg' : 'text-base'}`}>
-                  Municipal
+                  {t("services.municipal")}
                 </h3>
                 <p className={`text-muted-foreground line-clamp-2 ${typeof window !== 'undefined' && window.innerWidth >= 1024 ? 'text-sm' : 'text-xs'}`}>
-                  Waste, roads, streetlights
+                  {t("services.municipalDesc")}
                 </p>
               </div>
             </Link>
@@ -238,7 +238,7 @@ export default function DashboardPage() {
         {/* Quick Links */}
         <section className="mb-12 lg:mb-16">
           <div className="section-header mb-8">
-            Quick Actions
+            {t("dashboard.quickActions")}
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
             {quickLinks.map((link) => (

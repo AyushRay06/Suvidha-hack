@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ import {
     Plus
 } from "lucide-react";
 import { useAuthStore } from "@/lib/store/auth";
+import { LanguageToggle } from "@/components/ui/language-toggle";
 import { DownloadBillBtn } from "./download-bill-btn";
 import { ConsumptionChart } from "./consumption-chart";
 import { RechargeMeter } from "./recharge-meter";
@@ -46,6 +48,7 @@ interface Bill {
 
 export function ElectricityDashboard() {
     const router = useRouter();
+    const { t } = useTranslation();
     const { tokens, isAuthenticated } = useAuthStore();
     const [connection, setConnection] = useState<Connection | null>(null);
     const [bills, setBills] = useState<Bill[]>([]);
@@ -124,7 +127,7 @@ export function ElectricityDashboard() {
     if (loading) {
         return (
             <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white flex items-center justify-center">
-                <p className="text-muted-foreground">Loading...</p>
+                <p className="text-muted-foreground">{t("common.loading")}</p>
             </div>
         );
     }
@@ -136,19 +139,22 @@ export function ElectricityDashboard() {
             {/* Header */}
             <header className="bg-electricity-light py-6">
                 <div className="max-w-4xl mx-auto px-6">
-                    <div className="flex items-center gap-4 mb-4">
-                        <Link href="/dashboard" className="hover:opacity-80">
-                            <ArrowLeft className="w-6 h-6 text-electricity" />
-                        </Link>
-                        <div className="w-14 h-14 bg-white/50 rounded-xl flex items-center justify-center">
-                            <Zap className="w-8 h-8 text-electricity" />
+                    <div className="flex items-center justify-between gap-4 mb-4">
+                        <div className="flex items-center gap-4">
+                            <Link href="/dashboard" className="hover:opacity-80">
+                                <ArrowLeft className="w-6 h-6 text-electricity" />
+                            </Link>
+                            <div className="w-14 h-14 bg-white/50 rounded-xl flex items-center justify-center">
+                                <Zap className="w-8 h-8 text-electricity" />
+                            </div>
+                            <div>
+                                <h1 className="font-heading text-2xl font-bold text-electricity">
+                                    {t("services.electricity")}
+                                </h1>
+                                <p className="text-slate-600 text-sm">{t("services.electricityDesc")}</p>
+                            </div>
                         </div>
-                        <div>
-                            <h1 className="font-heading text-2xl font-bold text-electricity">
-                                Electricity
-                            </h1>
-                            <p className="text-slate-600 text-sm">Manage your electricity services</p>
-                        </div>
+                        <LanguageToggle variant="electricity" />
                     </div>
                 </div>
             </header>
@@ -163,7 +169,7 @@ export function ElectricityDashboard() {
                             className="mb-4 pl-0"
                             onClick={() => setShowRecharge(false)}
                         >
-                            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard
+                            <ArrowLeft className="mr-2 h-4 w-4" /> {t("common.back")} {t("dashboard.overview")}
                         </Button>
                         <RechargeMeter
                             connectionId={connection.id}
@@ -183,7 +189,7 @@ export function ElectricityDashboard() {
                                 className="pl-0"
                                 onClick={() => setShowOutageReport(false)}
                             >
-                                <ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard
+                                <ArrowLeft className="mr-2 h-4 w-4" /> {t("common.back")} {t("dashboard.overview")}
                             </Button>
                         </div>
                         <OutageReportForm
@@ -199,21 +205,21 @@ export function ElectricityDashboard() {
                                 <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5" />
                                 <div className="flex-1">
                                     <p className="font-medium text-amber-800">
-                                        {pendingBills.length} pending bill{pendingBills.length > 1 ? "s" : ""}
+                                        {pendingBills.length} {t("bills.pendingBills")}
                                     </p>
                                     <p className="text-sm text-amber-700">
-                                        Total: ₹{pendingBills.reduce((sum, b) => sum + b.amount, 0).toLocaleString()}
+                                        {t("bills.totalAmount")}: ₹{pendingBills.reduce((sum, b) => sum + b.amount, 0).toLocaleString()}
                                     </p>
                                 </div>
                                 <Link href="/bills">
-                                    <Button size="sm" variant="cta">Pay Now</Button>
+                                    <Button size="sm" variant="cta">{t("bills.payNow")}</Button>
                                 </Link>
                             </div>
                         )}
 
                         {/* Quick Actions */}
                         <section className="mb-8">
-                            <h2 className="font-heading text-lg text-primary mb-4">Quick Actions</h2>
+                            <h2 className="font-heading text-lg text-primary mb-4">{t("dashboard.quickActions")}</h2>
                             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                                 {/* 1. Pay Bills */}
                                 <Link
@@ -223,7 +229,7 @@ export function ElectricityDashboard() {
                                     <div className="w-10 h-10 bg-electricity-light rounded-lg flex items-center justify-center mb-2 group-hover:bg-electricity group-hover:text-white transition-colors">
                                         <FileText className="w-5 h-5 text-electricity group-hover:text-white" />
                                     </div>
-                                    <span className="text-xs font-bold text-primary uppercase tracking-tight">Pay Bills</span>
+                                    <span className="text-xs font-bold text-primary uppercase tracking-tight">{t("actions.payBills")}</span>
                                 </Link>
 
                                 {/* 2. Submit Reading */}
@@ -234,7 +240,7 @@ export function ElectricityDashboard() {
                                     <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center mb-2 group-hover:bg-blue-500 group-hover:text-white transition-colors">
                                         <Gauge className="w-5 h-5 text-blue-600 group-hover:text-white" />
                                     </div>
-                                    <span className="text-xs font-bold text-primary uppercase tracking-tight">Submit Reading</span>
+                                    <span className="text-xs font-bold text-primary uppercase tracking-tight">{t("electricity.submitReading")}</span>
                                 </Link>
 
                                 {/* 3. Recharge */}
@@ -245,7 +251,7 @@ export function ElectricityDashboard() {
                                     <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center mb-2 group-hover:bg-green-500 group-hover:text-white transition-colors">
                                         <TrendingUp className="w-5 h-5 text-green-600 group-hover:text-white" />
                                     </div>
-                                    <span className="text-xs font-bold text-primary uppercase tracking-tight">Recharge</span>
+                                    <span className="text-xs font-bold text-primary uppercase tracking-tight">{t("electricity.rechargeMeter")}</span>
                                 </div>
 
                                 {/* 4. Grievances */}
@@ -256,7 +262,7 @@ export function ElectricityDashboard() {
                                     <div className="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center mb-2 group-hover:bg-red-500 group-hover:text-white transition-colors">
                                         <AlertCircle className="w-5 h-5 text-red-600 group-hover:text-white" />
                                     </div>
-                                    <span className="text-xs font-bold text-primary uppercase tracking-tight">Grievances</span>
+                                    <span className="text-xs font-bold text-primary uppercase tracking-tight">{t("actions.grievances")}</span>
                                 </Link>
 
                                 {/* 5. History */}
@@ -267,7 +273,7 @@ export function ElectricityDashboard() {
                                     <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-slate-500 group-hover:text-white transition-colors">
                                         <FileText className="w-5 h-5 text-slate-600 group-hover:text-white" />
                                     </div>
-                                    <span className="text-xs font-bold text-primary uppercase tracking-tight">History</span>
+                                    <span className="text-xs font-bold text-primary uppercase tracking-tight">{t("electricity.viewHistory")}</span>
                                 </Link>
 
                                 {/* 6. Support */}
@@ -278,7 +284,7 @@ export function ElectricityDashboard() {
                                     <div className="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center mb-2 group-hover:bg-purple-500 group-hover:text-white transition-colors">
                                         <AlertCircle className="w-5 h-5 text-purple-600 group-hover:text-white" />
                                     </div>
-                                    <span className="text-xs font-bold text-primary uppercase tracking-tight">Support</span>
+                                    <span className="text-xs font-bold text-primary uppercase tracking-tight">{t("help.title")}</span>
                                 </Link>
                             </div>
                         </section>
@@ -286,11 +292,11 @@ export function ElectricityDashboard() {
                         {/* My Connections */}
                         <section>
                             <div className="flex items-center justify-between mb-4">
-                                <h2 className="font-heading text-lg text-primary">My Connections</h2>
+                                <h2 className="font-heading text-lg text-primary">{t("dashboard.myConnections")}</h2>
                                 <Link href="/connections/new">
                                     <Button variant="outline" size="sm">
                                         <Plus className="w-4 h-4 mr-2" />
-                                        New Connection
+                                        {t("electricity.newConnection")}
                                     </Button>
                                 </Link>
                             </div>
@@ -298,16 +304,16 @@ export function ElectricityDashboard() {
                             {error ? (
                                 <Card>
                                     <CardHeader>
-                                        <CardTitle>Error Loading Data</CardTitle>
+                                        <CardTitle>{t("common.error")}</CardTitle>
                                         <CardDescription>{error}</CardDescription>
                                     </CardHeader>
                                 </Card>
                             ) : !connection ? (
                                 <div className="text-center py-8">
                                     <Zap className="w-12 h-12 mx-auto text-slate-300 mb-4" />
-                                    <p className="text-muted-foreground mb-4">No electricity connections yet</p>
+                                    <p className="text-muted-foreground mb-4">{t("connections.noConnections")}</p>
                                     <Link href="/connections/new">
-                                        <Button variant="cta">Apply for New Connection</Button>
+                                        <Button variant="cta">{t("electricity.newConnection")}</Button>
                                     </Link>
                                 </div>
                             ) : (

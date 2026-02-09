@@ -62,13 +62,19 @@ npm run dev
 
 ## Recent Updates
 
+**February 2026**: Bilingual Support & UI Polish
+- ✅ **Full Multi-Language Support**: English, Hindi, and Assamese across all user interfaces
+- ✅ **Smart Language Toggle**: Context-aware color theming for better visibility
+- ✅ **Localized Forms**: Meter reading and grievance forms fully translated
+- ✅ **Service Dashboards**: All 4 services (Electricity, Water, Gas, Municipal) fully localized
+
 **February 2026**: Service Dashboards Design Enhancement
 - ✅ All service dashboards updated with consistent kiosk-optimized design
 - ✅ Fixed full-width header backgrounds (no more white borders!)
 - ✅ Enhanced electricity dashboard with 6-column responsive grid
 - ✅ Improved visual consistency across all four services
 
-See [UPDATE.md](./UPDATE.md) for detailed changelog.
+See [UPDATE.md](./update.md) for detailed changelog.
 
 ## Features
 

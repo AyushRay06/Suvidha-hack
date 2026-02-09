@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,7 @@ import {
     Droplets
 } from "lucide-react";
 import { useAuthStore } from "@/lib/store/auth";
+import { LanguageToggle } from "@/components/ui/language-toggle";
 import { ComplaintForm } from "./complaint-form";
 import { PropertyTaxCard } from "./property-tax-card";
 
@@ -70,6 +72,7 @@ interface WasteSchedule {
 
 export function MunicipalDashboard() {
     const router = useRouter();
+    const { t } = useTranslation();
     const { tokens, isAuthenticated } = useAuthStore();
     const [properties, setProperties] = useState<Property[]>([]);
     const [complaints, setComplaints] = useState<Complaint[]>([]);
@@ -132,7 +135,7 @@ export function MunicipalDashboard() {
     if (loading) {
         return (
             <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white flex items-center justify-center">
-                <p className="text-muted-foreground">Loading...</p>
+                <p className="text-muted-foreground">{t("common.loading")}</p>
             </div>
         );
     }
@@ -157,7 +160,7 @@ export function MunicipalDashboard() {
                                 <ArrowLeft className="w-6 h-6 text-municipal" />
                             </button>
                             <h1 className="font-heading text-2xl font-bold text-municipal">
-                                File Complaint
+                                {t("municipal.submitComplaint")}
                             </h1>
                         </div>
                     </div>
@@ -180,19 +183,22 @@ export function MunicipalDashboard() {
             {/* Header */}
             <header className="bg-municipal-light py-6">
                 <div className="max-w-4xl mx-auto px-6">
-                    <div className="flex items-center gap-4 mb-4">
-                        <Link href="/dashboard" className="hover:opacity-80">
-                            <ArrowLeft className="w-6 h-6 text-municipal" />
-                        </Link>
-                        <div className="w-14 h-14 bg-white/50 rounded-xl flex items-center justify-center">
-                            <Building2 className="w-8 h-8 text-municipal" />
+                    <div className="flex items-center justify-between gap-4 mb-4">
+                        <div className="flex items-center gap-4">
+                            <Link href="/dashboard" className="hover:opacity-80">
+                                <ArrowLeft className="w-6 h-6 text-municipal" />
+                            </Link>
+                            <div className="w-14 h-14 bg-white/50 rounded-xl flex items-center justify-center">
+                                <Building2 className="w-8 h-8 text-municipal" />
+                            </div>
+                            <div>
+                                <h1 className="font-heading text-2xl font-bold text-municipal">
+                                    {t("services.municipal")}
+                                </h1>
+                                <p className="text-slate-600 text-sm">{t("services.municipalDesc")}</p>
+                            </div>
                         </div>
-                        <div>
-                            <h1 className="font-heading text-2xl font-bold text-municipal">
-                                Municipal Services
-                            </h1>
-                            <p className="text-slate-600 text-sm">Manage civic services & property tax</p>
-                        </div>
+                        <LanguageToggle variant="municipal" />
                     </div>
                 </div>
             </header>
@@ -204,16 +210,16 @@ export function MunicipalDashboard() {
                     <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 flex items-start gap-3">
                         <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5" />
                         <div className="flex-1">
-                            <p className="font-medium text-amber-800">Property Tax Due</p>
-                            <p className="text-sm text-amber-700">₹{pendingTax.toLocaleString()} pending</p>
+                            <p className="font-medium text-amber-800">{t("municipal.taxDue")}</p>
+                            <p className="text-sm text-amber-700">₹{pendingTax.toLocaleString()} {t("bills.pending")}</p>
                         </div>
-                        <Button size="sm" variant="cta">Pay Now</Button>
+                        <Button size="sm" variant="cta">{t("bills.payNow")}</Button>
                     </div>
                 )}
 
                 {/* Quick Actions Grid */}
                 <section className="mb-8">
-                    <h2 className="font-heading text-lg text-primary mb-4">Quick Actions</h2>
+                    <h2 className="font-heading text-lg text-primary mb-4">{t("dashboard.quickActions")}</h2>
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                         {/* 1. Property Tax */}
                         <Link
@@ -223,7 +229,7 @@ export function MunicipalDashboard() {
                             <div className="w-10 h-10 bg-municipal-light rounded-lg flex items-center justify-center mb-2 group-hover:bg-municipal group-hover:text-white transition-colors">
                                 <IndianRupee className="w-5 h-5 text-municipal group-hover:text-white" />
                             </div>
-                            <span className="text-xs font-bold text-primary uppercase tracking-tight">Property Tax</span>
+                            <span className="text-xs font-bold text-primary uppercase tracking-tight">{t("municipal.propertyTax")}</span>
                         </Link>
 
                         {/* 2. Grievances */}
@@ -234,7 +240,7 @@ export function MunicipalDashboard() {
                             <div className="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center mb-2 group-hover:bg-red-500 group-hover:text-white transition-colors">
                                 <AlertCircle className="w-5 h-5 text-red-600 group-hover:text-white" />
                             </div>
-                            <span className="text-xs font-bold text-primary uppercase tracking-tight">Grievances</span>
+                            <span className="text-xs font-bold text-primary uppercase tracking-tight">{t("actions.grievances")}</span>
                         </Link>
 
                         {/* 6. Support */}
@@ -245,7 +251,7 @@ export function MunicipalDashboard() {
                             <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-slate-500 group-hover:text-white transition-colors">
                                 <Phone className="w-5 h-5 text-slate-600 group-hover:text-white" />
                             </div>
-                            <span className="text-xs font-bold text-primary uppercase tracking-tight">Support</span>
+                            <span className="text-xs font-bold text-primary uppercase tracking-tight">{t("help.title")}</span>
                         </Link>
                     </div>
                 </section>
@@ -253,7 +259,7 @@ export function MunicipalDashboard() {
                 {/* Waste Collection Schedule */}
                 {wasteSchedule && (
                     <section className="mb-8">
-                        <h2 className="font-heading text-lg text-primary mb-4">Waste Collection</h2>
+                        <h2 className="font-heading text-lg text-primary mb-4">{t("municipal.wasteCollection")}</h2>
                         <Card className="border-2 border-green-100">
                             <CardContent className="p-4">
                                 <div className="flex items-center justify-between mb-4">
@@ -277,11 +283,11 @@ export function MunicipalDashboard() {
                 {/* My Properties */}
                 <section className="mb-8" id="properties">
                     <div className="flex items-center justify-between mb-4">
-                        <h2 className="font-heading text-lg text-primary">My Properties</h2>
+                        <h2 className="font-heading text-lg text-primary">{t("dashboard.myConnections")}</h2>
                         <Link href="/properties/new">
                             <Button variant="outline" size="sm">
                                 <Plus className="w-4 h-4 mr-2" />
-                                Add Property
+                                {t("municipal.propertyTax")}
                             </Button>
                         </Link>
                     </div>
@@ -307,7 +313,7 @@ export function MunicipalDashboard() {
                 {complaints.length > 0 && (
                     <section>
                         <div className="flex items-center justify-between mb-4">
-                            <h2 className="font-heading text-lg text-primary">Recent Complaints</h2>
+                            <h2 className="font-heading text-lg text-primary">{t("grievance.title")}</h2>
                             <button
                                 onClick={() => setShowComplaintForm(true)}
                                 className="text-cta text-sm hover:underline"

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,7 @@ import {
     Phone
 } from "lucide-react";
 import { useAuthStore } from "@/lib/store/auth";
+import { LanguageToggle } from "@/components/ui/language-toggle";
 import { WaterConsumptionChart } from "./consumption-chart";
 
 interface Connection {
@@ -46,6 +48,7 @@ interface Bill {
 
 export function WaterDashboard() {
     const router = useRouter();
+    const { t } = useTranslation();
     const { tokens, isAuthenticated } = useAuthStore();
     const [connection, setConnection] = useState<Connection | null>(null);
     const [bills, setBills] = useState<Bill[]>([]);
@@ -117,7 +120,7 @@ export function WaterDashboard() {
     if (loading) {
         return (
             <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white flex items-center justify-center">
-                <p className="text-muted-foreground">Loading...</p>
+                <p className="text-muted-foreground">{t("common.loading")}</p>
             </div>
         );
     }
@@ -129,19 +132,22 @@ export function WaterDashboard() {
             {/* Header */}
             <header className="bg-water-light py-6">
                 <div className="max-w-4xl mx-auto px-6">
-                    <div className="flex items-center gap-4 mb-4">
-                        <Link href="/dashboard" className="hover:opacity-80">
-                            <ArrowLeft className="w-6 h-6 text-water" />
-                        </Link>
-                        <div className="w-14 h-14 bg-white/50 rounded-xl flex items-center justify-center">
-                            <Droplets className="w-8 h-8 text-water" />
+                    <div className="flex items-center justify-between gap-4 mb-4">
+                        <div className="flex items-center gap-4">
+                            <Link href="/dashboard" className="hover:opacity-80">
+                                <ArrowLeft className="w-6 h-6 text-water" />
+                            </Link>
+                            <div className="w-14 h-14 bg-white/50 rounded-xl flex items-center justify-center">
+                                <Droplets className="w-8 h-8 text-water" />
+                            </div>
+                            <div>
+                                <h1 className="font-heading text-2xl font-bold text-water">
+                                    {t("services.water")}
+                                </h1>
+                                <p className="text-slate-600 text-sm">{t("services.waterDesc")}</p>
+                            </div>
                         </div>
-                        <div>
-                            <h1 className="font-heading text-2xl font-bold text-water">
-                                Water
-                            </h1>
-                            <p className="text-slate-600 text-sm">Manage your water services</p>
-                        </div>
+                        <LanguageToggle variant="water" />
                     </div>
                 </div>
             </header>
@@ -154,21 +160,21 @@ export function WaterDashboard() {
                         <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5" />
                         <div className="flex-1">
                             <p className="font-medium text-amber-800">
-                                {pendingBills.length} pending bill{pendingBills.length > 1 ? "s" : ""}
+                                {pendingBills.length} {t("bills.pendingBills")}
                             </p>
                             <p className="text-sm text-amber-700">
-                                Total: ₹{pendingBills.reduce((sum, b) => sum + b.amount, 0).toLocaleString()}
+                                {t("bills.totalAmount")}: ₹{pendingBills.reduce((sum, b) => sum + b.amount, 0).toLocaleString()}
                             </p>
                         </div>
                         <Link href="/bills">
-                            <Button size="sm" variant="cta">Pay Now</Button>
+                            <Button size="sm" variant="cta">{t("bills.payNow")}</Button>
                         </Link>
                     </div>
                 )}
 
                 {/* Quick Actions Grid */}
                 <section className="mb-8">
-                    <h2 className="font-heading text-lg text-primary mb-4">Quick Actions</h2>
+                    <h2 className="font-heading text-lg text-primary mb-4">{t("dashboard.quickActions")}</h2>
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                         {/* 1. Pay Bill */}
                         <Link
@@ -178,7 +184,7 @@ export function WaterDashboard() {
                             <div className="w-10 h-10 bg-water-light rounded-lg flex items-center justify-center mb-2 group-hover:bg-water group-hover:text-white transition-colors">
                                 <IndianRupee className="w-5 h-5 text-water group-hover:text-white" />
                             </div>
-                            <span className="text-xs font-bold text-primary uppercase tracking-tight">Pay Bill</span>
+                            <span className="text-xs font-bold text-primary uppercase tracking-tight">{t("water.payBill")}</span>
                         </Link>
 
                         {/* 2. Submit Reading */}
@@ -189,7 +195,7 @@ export function WaterDashboard() {
                             <div className="w-10 h-10 bg-cyan-50 rounded-lg flex items-center justify-center mb-2 group-hover:bg-cyan-500 group-hover:text-white transition-colors">
                                 <Gauge className="w-5 h-5 text-cyan-600 group-hover:text-white" />
                             </div>
-                            <span className="text-xs font-bold text-primary uppercase tracking-tight">Submit Reading</span>
+                            <span className="text-xs font-bold text-primary uppercase tracking-tight">{t("water.submitReading")}</span>
                         </Link>
 
                         {/* 3. Grievances */}
@@ -200,7 +206,7 @@ export function WaterDashboard() {
                             <div className="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center mb-2 group-hover:bg-red-500 group-hover:text-white transition-colors">
                                 <AlertCircle className="w-5 h-5 text-red-600 group-hover:text-white" />
                             </div>
-                            <span className="text-xs font-bold text-primary uppercase tracking-tight">Grievances</span>
+                            <span className="text-xs font-bold text-primary uppercase tracking-tight">{t("actions.grievances")}</span>
                         </Link>
 
                         {/* 5. History */}
@@ -211,7 +217,7 @@ export function WaterDashboard() {
                             <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-slate-500 group-hover:text-white transition-colors">
                                 <History className="w-5 h-5 text-slate-600 group-hover:text-white" />
                             </div>
-                            <span className="text-xs font-bold text-primary uppercase tracking-tight">History</span>
+                            <span className="text-xs font-bold text-primary uppercase tracking-tight">{t("water.viewHistory")}</span>
                         </Link>
 
                         {/* 6. Support */}
@@ -222,7 +228,7 @@ export function WaterDashboard() {
                             <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center mb-2 group-hover:bg-green-500 group-hover:text-white transition-colors">
                                 <Phone className="w-5 h-5 text-green-600 group-hover:text-white" />
                             </div>
-                            <span className="text-xs font-bold text-primary uppercase tracking-tight">Support</span>
+                            <span className="text-xs font-bold text-primary uppercase tracking-tight">{t("help.title")}</span>
                         </Link>
                     </div>
                 </section>
@@ -230,11 +236,11 @@ export function WaterDashboard() {
                 {/* My Connections */}
                 <section className="mb-8">
                     <div className="flex items-center justify-between mb-4">
-                        <h2 className="font-heading text-lg text-primary">My Connections</h2>
+                        <h2 className="font-heading text-lg text-primary">{t("dashboard.myConnections")}</h2>
                         <Link href="/connections/new">
                             <Button variant="outline" size="sm">
                                 <Plus className="w-4 h-4 mr-2" />
-                                New Connection
+                                {t("water.newConnection")}
                             </Button>
                         </Link>
                     </div>
@@ -280,9 +286,9 @@ export function WaterDashboard() {
                     ) : (
                         <div className="text-center py-8">
                             <Droplets className="w-12 h-12 mx-auto text-slate-300 mb-4" />
-                            <p className="text-muted-foreground mb-4">No water connections yet</p>
+                            <p className="text-muted-foreground mb-4">{t("connections.noConnections")}</p>
                             <Link href="/connections/new">
-                                <Button variant="cta">Apply for New Connection</Button>
+                                <Button variant="cta">{t("water.newConnection")}</Button>
                             </Link>
                         </div>
                     )}
@@ -291,7 +297,7 @@ export function WaterDashboard() {
                 {/* Consumption Chart */}
                 {connection && (
                     <section className="mb-8">
-                        <h2 className="font-heading text-lg text-primary mb-4">Consumption History</h2>
+                        <h2 className="font-heading text-lg text-primary mb-4">{t("water.consumptionHistory")}</h2>
                         <Card>
                             <CardContent className="p-4">
                                 <WaterConsumptionChart connectionId={connection.id} />
@@ -304,9 +310,9 @@ export function WaterDashboard() {
                 {bills.length > 0 && (
                     <section>
                         <div className="flex items-center justify-between mb-4">
-                            <h2 className="font-heading text-lg text-primary">Recent Bills</h2>
+                            <h2 className="font-heading text-lg text-primary">{t("dashboard.recentBills")}</h2>
                             <Link href="/bills" className="text-cta text-sm hover:underline">
-                                View All
+                                {t("dashboard.viewAll")}
                             </Link>
                         </div>
                         <div className="space-y-3">

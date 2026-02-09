@@ -31,7 +31,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/lib/store/auth";
-import { SIGMMetricsCard } from "@/components/admin/SIGMMetricsCard";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 
 interface DashboardStats {
@@ -86,6 +85,7 @@ export default function AdminDashboardPage() {
     const [activities, setActivities] = useState<RecentActivity[]>([]);
     const [kiosks, setKiosks] = useState<KioskStatus[]>([]);
     const [refreshing, setRefreshing] = useState(false);
+    const [serviceUsage, setServiceUsage] = useState<Record<string, { count: number; revenue: number }>>({});
 
     useEffect(() => {
         if (!isAuthenticated) {
@@ -103,49 +103,40 @@ export default function AdminDashboardPage() {
         return () => clearInterval(interval);
     }, [isAuthenticated, user, router]);
 
+
     const fetchData = async () => {
         try {
-            const token = useAuthStore.getState().tokens?.accessToken;
-            const headers = { Authorization: `Bearer ${token}` };
-            const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+            const baseUrl = ""; // Use relative URLs since API routes are in the same Next.js app
 
-            const [statsRes, activitiesRes, kiosksRes] = await Promise.all([
-                fetch(`${baseUrl}/api/admin/dashboard`, { headers }),
-                fetch(`${baseUrl}/api/admin/activities?limit=10`, { headers }),
-                fetch(`${baseUrl}/api/admin/kiosks`, { headers }),
+            const [activitiesRes, serviceUsageRes] = await Promise.all([
+                fetch(`${baseUrl}/api/admin/activities?limit=10`),
+                fetch(`${baseUrl}/api/admin/service-usage`),
             ]);
-
-            if (statsRes.ok) {
-                const data = await statsRes.json();
-                setStats(data.data);
-            }
 
             if (activitiesRes.ok) {
                 const data = await activitiesRes.json();
+                console.log("Activities API response:", data);
                 setActivities(data.data || []);
             } else {
-                // Mock activities if API not available
-                setActivities([
-                    { id: "1", type: "PAYMENT", description: "Bill payment of ₹2,450", user: "Rahul S.", kioskId: "KIOSK-001", timestamp: new Date().toISOString(), serviceType: "ELECTRICITY" },
-                    { id: "2", type: "GRIEVANCE", description: "New complaint submitted", user: "Priya M.", kioskId: "KIOSK-002", timestamp: new Date(Date.now() - 300000).toISOString(), serviceType: "WATER" },
-                    { id: "3", type: "CONNECTION", description: "New connection application", user: "Amit K.", kioskId: "KIOSK-001", timestamp: new Date(Date.now() - 600000).toISOString(), serviceType: "GAS" },
-                    { id: "4", type: "METER_READING", description: "Meter reading submitted", user: "Sunita D.", kioskId: "KIOSK-003", timestamp: new Date(Date.now() - 900000).toISOString(), serviceType: "ELECTRICITY" },
-                    { id: "5", type: "PAYMENT", description: "Bill payment of ₹890", user: "Vikram R.", kioskId: "KIOSK-002", timestamp: new Date(Date.now() - 1200000).toISOString(), serviceType: "WATER" },
-                ]);
+                console.error("Activities API failed:", activitiesRes.status, await activitiesRes.text());
+                setActivities([]);
             }
 
-            if (kiosksRes.ok) {
-                const data = await kiosksRes.json();
-                setKiosks(data.data || []);
+            if (serviceUsageRes.ok) {
+                const data = await serviceUsageRes.json();
+                console.log("Service usage API response:", data);
+                setServiceUsage(data.data || {});
             } else {
-                // Mock kiosks if API not available
-                setKiosks([
-                    { id: "KIOSK-001", name: "City Center Kiosk", location: "Sector 17, Main Market", status: "ONLINE", lastActivity: new Date().toISOString(), todayTransactions: 45 },
-                    { id: "KIOSK-002", name: "Municipal Office Kiosk", location: "Municipal Corporation HQ", status: "ONLINE", lastActivity: new Date(Date.now() - 120000).toISOString(), todayTransactions: 32 },
-                    { id: "KIOSK-003", name: "Bus Stand Kiosk", location: "Central Bus Station", status: "ONLINE", lastActivity: new Date(Date.now() - 300000).toISOString(), todayTransactions: 28 },
-                    { id: "KIOSK-004", name: "Hospital Kiosk", location: "District Hospital", status: "OFFLINE", lastActivity: new Date(Date.now() - 3600000).toISOString(), todayTransactions: 12 },
-                ]);
+                console.error("Service usage API failed:", serviceUsageRes.status, await serviceUsageRes.text());
             }
+
+            // Set mock kiosks data
+            setKiosks([
+                { id: "KIOSK-001", name: "City Center Kiosk", location: "Sector 17, Main Market", status: "ONLINE", lastActivity: new Date().toISOString(), todayTransactions: 45 },
+                { id: "KIOSK-002", name: "Municipal Office Kiosk", location: "Municipal Corporation HQ", status: "ONLINE", lastActivity: new Date(Date.now() - 120000).toISOString(), todayTransactions: 32 },
+                { id: "KIOSK-003", name: "Bus Stand Kiosk", location: "Central Bus Station", status: "ONLINE", lastActivity: new Date(Date.now() - 300000).toISOString(), todayTransactions: 28 },
+                { id: "KIOSK-004", name: "Hospital Kiosk", location: "District Hospital", status: "OFFLINE", lastActivity: new Date(Date.now() - 3600000).toISOString(), todayTransactions: 12 },
+            ]);
         } catch (err) {
             console.error("Failed to fetch data:", err);
         } finally {
@@ -439,14 +430,15 @@ export default function AdminDashboardPage() {
                                 </h3>
                                 <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                                     {[
-                                        { key: "ELECTRICITY", name: "Electricity", nameHi: "बिजली", count: 67, revenue: 156000 },
-                                        { key: "GAS", name: "Gas", nameHi: "गैस", count: 23, revenue: 34500 },
-                                        { key: "WATER", name: "Water", nameHi: "पानी", count: 45, revenue: 28000 },
-                                        { key: "MUNICIPAL", name: "Municipal", nameHi: "नगरपालिका", count: 12, revenue: 8500 },
-                                        { key: "WASTE", name: "Waste", nameHi: "कचरा", count: 9, revenue: 0 },
+                                        { key: "ELECTRICITY", name: "Electricity", nameHi: "बिजली" },
+                                        { key: "GAS", name: "Gas", nameHi: "गैस" },
+                                        { key: "WATER", name: "Water", nameHi: "पानी" },
+                                        { key: "MUNICIPAL", name: "Municipal", nameHi: "नगरपालिका" },
+                                        { key: "WASTE", name: "Waste", nameHi: "कचरा" },
                                     ].map((service) => {
                                         const svc = serviceIcons[service.key];
                                         const Icon = svc.icon;
+                                        const usage = serviceUsage[service.key] || { count: 0, revenue: 0 };
                                         return (
                                             <div key={service.key} className={`p-4 ${svc.bg} rounded-xl`}>
                                                 <div className="flex items-center gap-2 mb-2">
@@ -455,9 +447,9 @@ export default function AdminDashboardPage() {
                                                         {isHindi ? service.nameHi : service.name}
                                                     </span>
                                                 </div>
-                                                <p className="text-2xl font-bold text-primary">{service.count}</p>
+                                                <p className="text-2xl font-bold text-primary">{usage.count}</p>
                                                 <p className="text-xs text-muted-foreground">
-                                                    {service.revenue > 0 ? `₹${service.revenue.toLocaleString()}` : isHindi ? "शिकायतें" : "complaints"}
+                                                    {usage.revenue > 0 ? `₹${usage.revenue.toLocaleString()}` : isHindi ? "शिकायतें" : "complaints"}
                                                 </p>
                                             </div>
                                         );
@@ -465,10 +457,6 @@ export default function AdminDashboardPage() {
                                 </div>
                             </div>
 
-                            {/* SIGM Metrics */}
-                            <div className="mt-6">
-                                <SIGMMetricsCard />
-                            </div>
                         </>
                     )}
                 </div>

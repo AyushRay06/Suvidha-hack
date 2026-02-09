@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +27,7 @@ interface BillEstimate {
 }
 
 export function MeterReadingForm({ connectionId, lastReading, onSuccess }: MeterReadingFormProps) {
+    const { t } = useTranslation();
     const { tokens } = useAuthStore();
     const [reading, setReading] = useState<string>("");
     const [photo, setPhoto] = useState<File | null>(null);
@@ -164,15 +166,15 @@ export function MeterReadingForm({ connectionId, lastReading, onSuccess }: Meter
                     <div className="w-16 h-16 bg-success/10 rounded-full flex items-center justify-center mx-auto mb-4">
                         <CheckCircle className="w-8 h-8 text-success" />
                     </div>
-                    <h3 className="font-heading text-xl text-success mb-2">Reading Submitted!</h3>
+                    <h3 className="font-heading text-xl text-success mb-2">{t("meterReading.readingSubmitted")}</h3>
                     <p className="text-muted-foreground mb-4">
-                        Your electricity meter reading has been recorded and bill generated.
+                        {t("meterReading.readingRecorded")}
                     </p>
 
                     {billEstimate && (
                         <div className="bg-white rounded-lg p-4 mb-4 text-left">
                             <div className="flex justify-between items-center mb-2">
-                                <span className="text-sm text-muted-foreground">Bill Amount</span>
+                                <span className="text-sm text-muted-foreground">{t("bills.billAmount")}</span>
                                 <span className="text-2xl font-bold text-primary">₹{billEstimate.totalAmount}</span>
                             </div>
                             <div className="text-xs text-muted-foreground">
@@ -186,7 +188,7 @@ export function MeterReadingForm({ connectionId, lastReading, onSuccess }: Meter
                         className="mt-4 w-full"
                         onClick={onSuccess}
                     >
-                        Back to Dashboard
+                        {t("common.backToDashboard")}
                     </Button>
                 </CardContent>
             </Card>
@@ -198,10 +200,10 @@ export function MeterReadingForm({ connectionId, lastReading, onSuccess }: Meter
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <Gauge className="w-5 h-5 text-yellow-500" />
-                    Submit Meter Reading
+                    {t("meterReading.submitTitle")}
                 </CardTitle>
                 <CardDescription>
-                    Enter your current electricity meter reading in Units
+                    {t("meterReading.enterReading")}
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -210,14 +212,14 @@ export function MeterReadingForm({ connectionId, lastReading, onSuccess }: Meter
                     <div className="bg-yellow-50 rounded-lg p-4">
                         <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                             <Calendar className="w-4 h-4" />
-                            Previous Reading
+                            {t("meterReading.previousReading")}
                         </div>
                         <div className="text-2xl font-bold text-yellow-600">{lastReading} units</div>
                     </div>
 
                     {/* Current Reading Input */}
                     <div className="space-y-2">
-                        <Label htmlFor="reading" className="text-base">Current Reading (Units)</Label>
+                        <Label htmlFor="reading" className="text-base">{t("meterReading.currentReading")}</Label>
                         <Input
                             id="reading"
                             type="number"
@@ -235,7 +237,7 @@ export function MeterReadingForm({ connectionId, lastReading, onSuccess }: Meter
                         <div className="flex items-center gap-3 p-3 bg-amber-50 rounded-lg">
                             <TrendingUp className="w-5 h-5 text-amber-600" />
                             <div>
-                                <p className="text-sm text-muted-foreground">Consumption</p>
+                                <p className="text-sm text-muted-foreground">{t("meterReading.consumption")}</p>
                                 <p className="font-bold text-amber-700">{consumption.toFixed(1)} units</p>
                             </div>
                         </div>
@@ -244,7 +246,7 @@ export function MeterReadingForm({ connectionId, lastReading, onSuccess }: Meter
                     {/* Bill Estimate */}
                     {billEstimate && (
                         <div className="border rounded-lg p-4 space-y-3">
-                            <h4 className="font-medium text-sm text-muted-foreground">Estimated Bill</h4>
+                            <h4 className="font-medium text-sm text-muted-foreground">{t("meterReading.estimatedBill")}</h4>
 
                             {/* Slab Breakdown */}
                             {billEstimate.slabBreakdown && (
@@ -261,11 +263,11 @@ export function MeterReadingForm({ connectionId, lastReading, onSuccess }: Meter
                             <hr />
 
                             <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground">Energy Charges</span>
+                                <span className="text-muted-foreground">{t("bills.energyCharges")}</span>
                                 <span>₹{billEstimate.energyCharge.toFixed(2)}</span>
                             </div>
                             <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground">Fixed Charges</span>
+                                <span className="text-muted-foreground">{t("bills.fixedCharges")}</span>
                                 <span>₹{billEstimate.fixedCharge.toFixed(2)}</span>
                             </div>
                             {billEstimate.fpppaCharge && billEstimate.fpppaCharge > 0 && (
@@ -278,7 +280,7 @@ export function MeterReadingForm({ connectionId, lastReading, onSuccess }: Meter
                             <hr />
 
                             <div className="flex justify-between font-bold text-lg">
-                                <span>Total</span>
+                                <span>{t("common.total")}</span>
                                 <span className="text-yellow-600">₹{billEstimate.totalAmount.toFixed(2)}</span>
                             </div>
                         </div>
@@ -286,7 +288,7 @@ export function MeterReadingForm({ connectionId, lastReading, onSuccess }: Meter
 
                     {/* Photo Upload */}
                     <div className="space-y-2">
-                        <Label>Meter Photo (Optional)</Label>
+                        <Label>{t("meterReading.meterPhoto")}</Label>
                         <div className="mt-2">
                             {photoPreview ? (
                                 <div className="relative">
@@ -302,14 +304,14 @@ export function MeterReadingForm({ connectionId, lastReading, onSuccess }: Meter
                                         className="absolute top-2 right-2"
                                     >
                                         <X className="w-4 h-4 mr-1" />
-                                        Remove
+                                        {t("common.remove")}
                                     </Button>
                                 </div>
                             ) : (
                                 <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-slate-50 transition-colors">
                                     <Camera className="w-8 h-8 text-muted-foreground mb-2" />
                                     <p className="text-sm text-muted-foreground">
-                                        Click to upload photo
+                                        {t("meterReading.clickToUpload")}
                                     </p>
                                     <input type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
                                 </label>
@@ -340,7 +342,7 @@ export function MeterReadingForm({ connectionId, lastReading, onSuccess }: Meter
                         ) : (
                             <>
                                 <Upload className="w-4 h-4 mr-2" />
-                                Submit Reading
+                                {t("meterReading.submitReading")}
                             </>
                         )}
                     </Button>
