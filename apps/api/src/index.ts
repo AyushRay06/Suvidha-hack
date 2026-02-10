@@ -39,8 +39,21 @@ const PORT = process.env.PORT || 4000;
 
 // Security middleware
 app.use(helmet());
+
+// CORS: support multiple origins for local dev + production
+const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:3000')
+  .split(',')
+  .map((origin) => origin.trim());
+
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(null, false);
+  },
   credentials: true,
 }));
 
@@ -96,10 +109,13 @@ app.use((req, res) => {
   res.status(404).json({ success: false, error: 'Route not found' });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`🚀 SUVIDHA API running on http://localhost:${PORT}`);
-  console.log(`📋 Health check: http://localhost:${PORT}/health`);
-});
+// Only start the server when NOT running in Vercel (serverless)
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`🚀 SUVIDHA API running on http://localhost:${PORT}`);
+    console.log(`📋 Health check: http://localhost:${PORT}/health`);
+  });
+}
 
 export default app;
+

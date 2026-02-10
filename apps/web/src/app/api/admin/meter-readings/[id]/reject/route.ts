@@ -1,14 +1,16 @@
+
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@suvidha/database";
 import { verifyToken } from "@/lib/auth";
 
 export async function POST(
-    req: NextRequest,
-    { params }: { params: { id: string } }
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await params;
         // Verify authentication
-        const authHeader = req.headers.get("authorization");
+        const authHeader = request.headers.get("authorization");
         if (!authHeader?.startsWith("Bearer ")) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
@@ -28,7 +30,7 @@ export async function POST(
             return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
 
-        const { id } = params;
+
 
         // Update meter reading
         const reading = await prisma.meterReading.update({

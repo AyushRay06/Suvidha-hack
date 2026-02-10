@@ -75,7 +75,7 @@ export class BillGeneratorService {
                 unitsConsumed,
                 amount: calculation.fixedCharge,
                 totalAmount: calculation.totalAmount,
-                status: 'PENDING',
+                status: 'UNPAID',
                 amountPaid: 0,
             },
         });
@@ -84,7 +84,7 @@ export class BillGeneratorService {
         await prisma.notification.create({
             data: {
                 userId: connection.userId,
-                type: 'BILL_GENERATED',
+                type: 'BILL_DUE',
                 title: 'New Electricity Bill Generated',
                 titleHi: 'नया बिजली बिल जेनरेट हुआ',
                 message: `Your electricity bill for ${unitsConsumed} units is ₹${calculation.totalAmount}. Bill No: ${billNo}. Due date: ${dueDate.toLocaleDateString()}`,

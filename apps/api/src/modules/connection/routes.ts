@@ -145,7 +145,9 @@ router.post('/:id/meter-reading', async (req: AuthReq, res, next) => {
         reading,
         readingDate: new Date(),
         submittedBy: 'CITIZEN',
-        imageUrl,
+        userId: req.user!.id,
+        serviceType: connection.serviceType,
+        photoUrl: imageUrl,
       },
     });
     

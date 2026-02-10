@@ -129,7 +129,9 @@ export class GasService {
                 reading,
                 readingDate: new Date(),
                 submittedBy: 'CITIZEN',
-                imageUrl,
+                userId,
+                serviceType: 'GAS',
+                photoUrl: imageUrl,
             },
         });
 
