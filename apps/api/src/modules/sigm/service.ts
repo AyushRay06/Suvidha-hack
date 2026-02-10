@@ -579,7 +579,7 @@ export async function logSIGMCheck(
             requestType: result.requestType as any,
             serviceType: result.serviceType as any,
             guaranteeStatus: result.guaranteeStatus as any,
-            blockingReasons: result.blockingReasons as any,
+            blockingReasons: result.blockingReasons as unknown as any,
             checkDetails: result.checkDetails as any,
         },
     });
