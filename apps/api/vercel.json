@@ -2,7 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
   "installCommand": "cd ../.. && npm install && cd packages/database && npx prisma generate",
-  "buildCommand": "echo 'Skipping tsc - Vercel compiles TypeScript for serverless functions'",
+  "buildCommand": "cd ../.. && npx turbo run build --filter=@suvidha/api",
   "outputDirectory": ".",
   "functions": {
     "api/index.ts": {
