@@ -136,7 +136,7 @@ export class GasService {
         });
 
         // Generate Bill
-        let bill = null;
+        let bill: any = null;
         if (connection.lastReading !== undefined && connection.lastReading !== null) {
             const units = reading - connection.lastReading;
 
