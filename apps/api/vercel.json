@@ -5,8 +5,8 @@
   "buildCommand": "cd ../.. && npx turbo run build --filter=@suvidha/api",
   "outputDirectory": ".",
   "functions": {
-    "api/index.ts": {
-      "includeFiles": "dist/**,../../packages/**,../../node_modules/@prisma/**,../../node_modules/.prisma/**"
+    "api/index.js": {
+      "includeFiles": "dist/**,../../node_modules/@prisma/**,../../node_modules/.prisma/**"
     }
   },
   "rewrites": [
