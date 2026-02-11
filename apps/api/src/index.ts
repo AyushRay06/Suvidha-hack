@@ -43,7 +43,7 @@ app.use(helmet());
 // CORS: support multiple origins for local dev + production
 const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:3000')
   .split(',')
-  .map((origin) => origin.trim());
+  .map((origin) => origin.trim().replace(/\/+$/, '')); // strip trailing slashes
 
 app.use(cors({
   origin: (origin, callback) => {
