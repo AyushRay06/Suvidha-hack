@@ -59,8 +59,8 @@ router.post('/send-otp', async (req, res, next) => {
     res.json({
       success: true,
       message: 'OTP sent successfully',
-      // Remove in production - only for testing
-      ...(process.env.NODE_ENV === 'development' && { otp }),
+      // Demo mode: always return OTP (no SMS service configured)
+      otp,
     });
   } catch (error) {
     next(error);
@@ -72,10 +72,10 @@ router.post('/login', async (req, res, next) => {
   try {
     const { phone, otp } = verifyOtpSchema.parse(req.body);
 
-    // Verify OTP - in dev mode, accept '123456' as fallback
+    // Verify OTP - accept '123456' as demo fallback (no SMS service configured)
     const storedOtp = otpStore.get(phone);
     const isValidOtp = (storedOtp && storedOtp.otp === otp && storedOtp.expiresAt > new Date()) ||
-      (process.env.NODE_ENV === 'development' && otp === '123456');
+      otp === '123456';
 
     if (!isValidOtp) {
       throw new ApiError('Invalid or expired OTP', 400);
@@ -143,10 +143,10 @@ router.post('/register', async (req, res, next) => {
   try {
     const data = registerSchema.parse(req.body);
 
-    // Verify OTP - in dev mode, accept '123456' as fallback
+    // Verify OTP - accept '123456' as demo fallback (no SMS service configured)
     const storedOtp = otpStore.get(data.phone);
     const isValidOtp = (storedOtp && storedOtp.otp === data.otp && storedOtp.expiresAt > new Date()) ||
-      (process.env.NODE_ENV === 'development' && data.otp === '123456');
+      data.otp === '123456';
 
     if (!isValidOtp) {
       throw new ApiError('Invalid or expired OTP', 400);
