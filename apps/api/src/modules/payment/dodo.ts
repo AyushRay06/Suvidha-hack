@@ -38,7 +38,15 @@ export const dodoClient = new DodoPayments({
 });
 
 // Initialize webhook verifier (using standardwebhooks)
-const webhookVerifier = DODO_WEBHOOK_KEY ? new Webhook(DODO_WEBHOOK_KEY) : null;
+// Wrapped in try-catch because Webhook constructor requires a valid Base64 key
+let webhookVerifier: InstanceType<typeof Webhook> | null = null;
+try {
+  if (DODO_WEBHOOK_KEY && DODO_WEBHOOK_KEY !== 'your_dodo_webhook_secret_here') {
+    webhookVerifier = new Webhook(DODO_WEBHOOK_KEY);
+  }
+} catch (error) {
+  console.warn('[Dodo Payments] Failed to initialize webhook verifier — key may not be valid Base64:', (error as Error).message);
+}
 
 // ============================================
 // Types
