@@ -6,7 +6,7 @@
   "outputDirectory": ".",
   "functions": {
     "api/index.ts": {
-      "includeFiles": "../../packages/**,../../node_modules/@prisma/**,../../node_modules/.prisma/**"
+      "includeFiles": "dist/**,../../packages/**,../../node_modules/@prisma/**,../../node_modules/.prisma/**"
     }
   },
   "rewrites": [

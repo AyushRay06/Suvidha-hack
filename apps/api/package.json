@@ -10,7 +10,7 @@
     "worker:electricity": "tsx src/workers/electricity-worker.ts"
   },
   "dependencies": {
-    "@prisma/client": "^7.3.0",
+    "@prisma/client": "^5.10.0",
     "@suvidha/database": "*",
     "@suvidha/types": "*",
     "@types/bcryptjs": "^2.4.6",

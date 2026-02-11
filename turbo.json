@@ -1,6 +1,18 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "globalDependencies": ["**/.env.*local"],
+  "globalEnv": [
+    "DATABASE_URL",
+    "JWT_SECRET",
+    "PORT",
+    "NODE_ENV",
+    "CORS_ORIGIN",
+    "FRONTEND_URL",
+    "DODO_PAYMENTS_API_KEY",
+    "DODO_PAYMENTS_WEBHOOK_KEY",
+    "DODO_PAYMENTS_ENVIRONMENT",
+    "DODO_PAYMENTS_PRODUCT_ID"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
