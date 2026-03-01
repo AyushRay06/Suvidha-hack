@@ -17,7 +17,7 @@ import {
     recordSIGMSubmission,
     queueBackendActions,
 } from './service';
-import { GuaranteeCheckRequest, SIGM_CONFIGS, RequestType } from './types';
+import { GuaranteeCheckRequest, SIGM_CONFIGS, SIGMRequestType } from './types';
 
 const router = Router();
 
@@ -180,7 +180,7 @@ router.post('/record-submission', async (req: AuthReq, res, next) => {
 
         // Create lock to prevent duplicates
         if (lockIdentifier) {
-            const config = SIGM_CONFIGS[sigmLog.requestType as RequestType];
+            const config = SIGM_CONFIGS[sigmLog.requestType as SIGMRequestType];
             await createRequestLock(
                 req.user!.id,
                 sigmLog.serviceType,

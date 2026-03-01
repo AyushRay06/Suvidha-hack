@@ -104,4 +104,3 @@ router.get('/:id/certificate', async (req: AuthReq, res, next) => {
 });
 
 export default router;
-

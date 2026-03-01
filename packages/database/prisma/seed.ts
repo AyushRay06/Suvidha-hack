@@ -47,7 +47,11 @@ async function main() {
   const connections = await Promise.all([
     prisma.serviceConnection.upsert({
       where: { connectionNo: "ELEC-2024-001234" },
-      update: {},
+      update: {
+        loadType: "RESIDENTIAL",
+        phase: "SINGLE",
+        sanctionedLoad: 5.0,
+      },
       create: {
         userId: user.id,
         serviceType: "ELECTRICITY",
@@ -59,31 +63,48 @@ async function main() {
         pincode: "110001",
         status: "ACTIVE",
         connectionDate: new Date("2023-01-15"),
+        loadType: "RESIDENTIAL",
+        phase: "SINGLE",
+        sanctionedLoad: 5.0,
       },
     }),
     prisma.serviceConnection.upsert({
       where: { connectionNo: "WATER-2024-005678" },
-      update: {},
+      update: {
+        loadType: "DOMESTIC",
+        lastReading: 45,
+        lastReadingDate: new Date("2024-01-25"),
+      },
       create: {
         userId: user.id,
         serviceType: "WATER",
         connectionNo: "WATER-2024-005678",
         meterNo: "WTR-54321",
         address: "123 Gandhi Road",
-        city: "New Delhi",
-        state: "Delhi",
-        pincode: "110001",
+        city: "Guwahati",
+        state: "Assam",
+        pincode: "781001",
         status: "ACTIVE",
         connectionDate: new Date("2023-02-20"),
+        loadType: "DOMESTIC",
+        lastReading: 45,
+        lastReadingDate: new Date("2024-01-25"),
       },
     }),
     prisma.serviceConnection.upsert({
       where: { connectionNo: "GAS-2024-009012" },
-      update: {},
+      update: {
+        provider: "INDANE",
+        agency: "Assam Gas Agency",
+        cylinders: 1,
+      },
       create: {
         userId: user.id,
         serviceType: "GAS",
         connectionNo: "GAS-2024-009012",
+        provider: "INDANE",
+        agency: "Assam Gas Agency",
+        cylinders: 1,
         address: "123 Gandhi Road",
         city: "New Delhi",
         state: "Delhi",
@@ -186,6 +207,65 @@ async function main() {
   });
   console.log(`✅ Created grievance: ${grievance.ticketNo}`);
 
+  // Create demo property for municipal services
+  const property = await prisma.property.upsert({
+    where: { propertyId: "PROP-GHY-2024-001" },
+    update: {},
+    create: {
+      userId: user.id,
+      propertyId: "PROP-GHY-2024-001",
+      propertyType: "RESIDENTIAL",
+      address: "123 Gandhi Road, Lakhimi Nagar",
+      ward: "Ward 15",
+      area: 1200,
+      city: "Guwahati",
+      state: "Assam",
+      pincode: "781001",
+      isVerified: true,
+    },
+  });
+
+  // Create property tax record for current financial year
+  await prisma.propertyTax.upsert({
+    where: {
+      propertyId_financialYear: {
+        propertyId: property.id,
+        financialYear: "2024-25",
+      },
+    },
+    update: {},
+    create: {
+      propertyId: property.id,
+      financialYear: "2024-25",
+      baseAmount: 2400,
+      surcharge: 100,
+      discount: 0,
+      totalAmount: 2500,
+      amountPaid: 0,
+      status: "UNPAID",
+      dueDate: new Date("2025-03-31"),
+    },
+  });
+  console.log(`✅ Created property: ${property.propertyId}`);
+
+  // Create demo civic complaint
+  const complaint = await prisma.civicComplaint.upsert({
+    where: { complaintNo: "CMP-2024-000001" },
+    update: {},
+    create: {
+      userId: user.id,
+      complaintNo: "CMP-2024-000001",
+      category: "STREETLIGHT",
+      subject: "Streetlight not working near Gandhi Road",
+      description: "The streetlight outside house #123 on Gandhi Road has not been working for the past 3 days.",
+      location: "Gandhi Road, Near Lakhimi Nagar Junction",
+      priority: "MEDIUM",
+      status: "OPEN",
+    },
+  });
+  console.log(`✅ Created civic complaint: ${complaint.complaintNo}`);
+
+
   // Create notifications
   await prisma.notification.createMany({
     skipDuplicates: true,
@@ -235,6 +315,30 @@ async function main() {
     },
   });
   console.log("✅ Created system alerts");
+
+  // Create electricity tariffs - Assam 2025 Rates (APDCL)
+  const tariffs = [
+    // Residential/Domestic Tariffs (Assam April 2025)
+    // 0-120 units: ₹4.90/unit + ₹0.69 FPPPA = ₹5.59/unit effective
+    { serviceType: 'ELECTRICITY', loadType: 'RESIDENTIAL', slabStart: 0, slabEnd: 120, ratePerUnit: 4.90, fixedCharge: 60 },
+    // 121-240 units: ₹6.30/unit + ₹0.69 FPPPA = ₹6.99/unit effective  
+    { serviceType: 'ELECTRICITY', loadType: 'RESIDENTIAL', slabStart: 120, slabEnd: 240, ratePerUnit: 6.30, fixedCharge: 60 },
+    // Above 240 units: ₹7.50/unit + ₹0.69 FPPPA = ₹8.19/unit effective
+    { serviceType: 'ELECTRICITY', loadType: 'RESIDENTIAL', slabStart: 240, slabEnd: null, ratePerUnit: 7.50, fixedCharge: 60 },
+
+    // Commercial Tariffs (Reduced by 25 paisa from ₹8.60)
+    { serviceType: 'ELECTRICITY', loadType: 'COMMERCIAL', slabStart: 0, slabEnd: 500, ratePerUnit: 8.35, fixedCharge: 150 },
+    { serviceType: 'ELECTRICITY', loadType: 'COMMERCIAL', slabStart: 500, slabEnd: null, ratePerUnit: 9.50, fixedCharge: 150 },
+
+    // Industrial Tariffs
+    { serviceType: 'ELECTRICITY', loadType: 'INDUSTRIAL', slabStart: 0, slabEnd: 1000, ratePerUnit: 7.00, fixedCharge: 200 },
+    { serviceType: 'ELECTRICITY', loadType: 'INDUSTRIAL', slabStart: 1000, slabEnd: null, ratePerUnit: 8.00, fixedCharge: 200 },
+  ];
+
+  for (const tariff of tariffs) {
+    await prisma.tariff.create({ data: tariff as any });
+  }
+  console.log(`✅ Created ${tariffs.length} electricity tariffs (Assam 2025 rates)`);
 
   console.log("\n🎉 Seed completed successfully!");
   console.log("\n📋 Test Logins:");

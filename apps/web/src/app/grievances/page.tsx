@@ -112,8 +112,8 @@ export default function GrievancesPage() {
               key={f}
               onClick={() => setFilter(f)}
               className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors cursor-pointer ${filter === f
-                ? "bg-cta text-white"
-                : "bg-white border border-slate-200 text-slate-600 hover:border-cta"
+                  ? "bg-cta text-white"
+                  : "bg-white border border-slate-200 text-slate-600 hover:border-cta"
                 }`}
             >
               {f === "ALL" ? t("grievance.all") : f === "OPEN" ? t("grievance.open") : t("grievance.resolved")}
@@ -129,8 +129,7 @@ export default function GrievancesPage() {
         ) : filteredGrievances.length > 0 ? (
           <div className="space-y-4">
             {filteredGrievances.map((grievance) => {
-              // Safe fallback for status - use SUBMITTED style as default if status not found
-              const status = statusStyles[grievance.status] || statusStyles.SUBMITTED;
+              const status = statusStyles[grievance.status] || { icon: AlertCircle, bg: "bg-slate-100", text: "text-slate-600" };
               const StatusIcon = status.icon;
 
               return (

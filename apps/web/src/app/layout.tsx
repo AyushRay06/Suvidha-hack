@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { I18nProvider } from "@/lib/i18n/provider";
+import { DynamicHtmlLang } from "@/components/shared/DynamicHtmlLang";
 import { AccessibilityProvider } from "@/lib/context/accessibility";
 import { AccessibilityToolbar } from "@/components/kiosk/AccessibilityToolbar";
 
@@ -24,14 +25,20 @@ export default function RootLayout({
       <body className={inter.className}>
         <I18nProvider>
           <AccessibilityProvider>
+            <DynamicHtmlLang />
             <a href="#main-content" className="skip-link">
               Skip to main content
             </a>
+            <nav aria-label="Skip navigation" className="sr-only">
+              <a href="#main-content">Skip to main content</a>
+            </nav>
             <main id="main-content">
               {children}
             </main>
+            <div aria-live="polite" aria-atomic="true">
+              <Toaster />
+            </div>
             <AccessibilityToolbar />
-            <Toaster />
           </AccessibilityProvider>
         </I18nProvider>
       </body>

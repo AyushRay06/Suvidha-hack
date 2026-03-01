@@ -239,7 +239,85 @@ The system automatically:
 # Install all dependencies
 npm install
 
-# Start all services in development
+# Set up environment variables
+cp apps/api/.env.example apps/api/.env
+# Edit apps/api/.env with your DATABASE_URL
+
+# Generate Prisma client
+npm run db:generate
+
+# Push schema to database
+npm run db:push
+
+# Seed database with Assam Tariffs & Demo Data
+npm run db:seed --prefix packages/database
+
+# Start development servers
+npm run dev
+```
+
+### Access
+
+- **Kiosk Interface**: http://localhost:3000
+- **API Server**: http://localhost:4000
+- **API Health Check**: http://localhost:4000/health
+
+## Recent Updates
+
+**February 2026**: Bilingual Support & UI Polish
+- ✅ **Full Multi-Language Support**: English, Hindi, and Assamese across all user interfaces
+- ✅ **Smart Language Toggle**: Context-aware color theming for better visibility
+- ✅ **Localized Forms**: Meter reading and grievance forms fully translated
+- ✅ **Service Dashboards**: All 4 services (Electricity, Water, Gas, Municipal) fully localized
+
+**February 2026**: Service Dashboards Design Enhancement
+- ✅ All service dashboards updated with consistent kiosk-optimized design
+- ✅ Fixed full-width header backgrounds (no more white borders!)
+- ✅ Enhanced electricity dashboard with 6-column responsive grid
+- ✅ Improved visual consistency across all four services
+
+See [UPDATE.md](./update.md) for detailed changelog.
+
+## Features
+
+### For Citizens
+- 🔐 **Smart Authentication**: Simplified demo login & OTP support
+- ⚡ **Assam Power (APDCL) Integration**: 
+  - Real-time bill calculation with **April 2025 Tariff Rates**
+  - Automatic **FPPPA Charge** calculation (₹0.69/unit)
+  - Slab-based billing (0-120, 121-240, >240 units)
+- 📉 **Unified Meter Reading**:
+  - Instant bill estimation while typing
+  - Seamless submission with photo verification
+- 💳 Bill payments with mock payment gateway
+- 📝 Grievance submission and tracking
+- 🔔 Real-time notifications and alerts
+- 🌐 Bilingual support (English/Assamese/Hindi)
+
+### For Admins
+- 📊 Dashboard with usage analytics
+- 📋 Reports generation
+- 🚨 System alert management
+- 👥 User management
+
+## API Endpoints
+
+| Module | Endpoint | Description |
+|--------|----------|-------------|
+| Auth | `POST /api/auth/send-otp` | Send OTP to phone |
+| Auth | `POST /api/auth/login` | Verify OTP and login |
+| Auth | `POST /api/auth/register` | Register new user |
+| Billing | `GET /api/billing/bills` | List user bills |
+| Billing | `POST /api/billing/pay` | Process payment |
+| Connections | `GET /api/connections` | List user connections |
+| Grievances | `POST /api/grievances` | Submit grievance |
+| Notifications | `GET /api/notifications` | User notifications |
+| Admin | `GET /api/admin/dashboard` | Admin dashboard stats |
+
+## Development
+
+```bash
+# Run all services
 npm run dev
 
 # Build all packages

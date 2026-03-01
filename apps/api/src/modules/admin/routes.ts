@@ -61,6 +61,44 @@ router.get('/dashboard', async (req: AuthReq, res, next) => {
   }
 });
 
+// Get all grievances (Admin)
+router.get('/grievances', async (req: AuthReq, res, next) => {
+  try {
+    const { status, serviceType, page = '1', limit = '50' } = req.query;
+
+    const where: any = {};
+    if (status && status !== 'all') where.status = status as string;
+    if (serviceType) where.serviceType = serviceType as string;
+
+    const [grievances, total] = await Promise.all([
+      prisma.grievance.findMany({
+        where,
+        include: {
+          user: { select: { name: true, phone: true } },
+          connection: { select: { connectionNo: true, serviceType: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: (parseInt(page as string) - 1) * parseInt(limit as string),
+        take: parseInt(limit as string),
+      }),
+      prisma.grievance.count({ where }),
+    ]);
+
+    res.json({
+      success: true,
+      data: grievances,
+      pagination: {
+        page: parseInt(page as string),
+        limit: parseInt(limit as string),
+        total,
+        totalPages: Math.ceil(total / parseInt(limit as string)),
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // Reports
 router.get('/reports', async (req: AuthReq, res, next) => {
   try {
@@ -186,6 +224,73 @@ router.put('/alerts/:id/deactivate', async (req: AuthReq, res, next) => {
   }
 });
 
+// Get all connections (Admin)
+router.get('/connections', async (req: AuthReq, res, next) => {
+  try {
+    const { search, status, serviceType, page = '1', limit = '10' } = req.query;
+
+    const where: any = {};
+
+    // Filter by status
+    if (status && status !== 'all') {
+      where.status = status as string;
+    }
+
+    // Filter by service type
+    if (serviceType && serviceType !== 'all') {
+      where.serviceType = serviceType as string;
+    }
+
+    // Search functionality
+    if (search) {
+      where.OR = [
+        { connectionNo: { contains: search as string, mode: 'insensitive' } },
+        { meterNo: { contains: search as string, mode: 'insensitive' } },
+        { user: { name: { contains: search as string, mode: 'insensitive' } } },
+        { user: { phone: { contains: search as string } } },
+      ];
+    }
+
+    const [connections, total] = await Promise.all([
+      prisma.serviceConnection.findMany({
+        where,
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              phone: true,
+            },
+          },
+          _count: {
+            select: {
+              bills: true,
+              meterReadings: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: (parseInt(page as string) - 1) * parseInt(limit as string),
+        take: parseInt(limit as string),
+      }),
+      prisma.serviceConnection.count({ where }),
+    ]);
+
+    res.json({
+      success: true,
+      data: connections,
+      pagination: {
+        page: parseInt(page as string),
+        limit: parseInt(limit as string),
+        total,
+        totalPages: Math.ceil(total / parseInt(limit as string)),
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // Get all users (for staff)
 router.get('/users', async (req: AuthReq, res, next) => {
   try {
@@ -238,34 +343,36 @@ router.get('/users', async (req: AuthReq, res, next) => {
   }
 });
 
-// Get all grievances for admin
-router.get('/grievances', async (req: AuthReq, res, next) => {
+// ============================================
+// METER READINGS MANAGEMENT
+// ============================================
+
+// Get all meter readings (Admin)
+router.get('/meter-readings', async (req: AuthReq, res, next) => {
   try {
-    const { status, serviceType, page = '1', limit = '50' } = req.query;
+    const { status, serviceType, page = '1', limit = '100' } = req.query;
 
     const where: any = {};
-    if (status && status !== 'all') where.status = status;
-    if (serviceType) where.serviceType = serviceType;
+    if (status && status !== 'ALL') where.status = status as string;
+    if (serviceType && serviceType !== 'ALL') where.serviceType = serviceType as string;
 
-    const [grievances, total] = await Promise.all([
-      prisma.grievance.findMany({
+    const [readings, total] = await Promise.all([
+      prisma.meterReading.findMany({
         where,
         include: {
           user: { select: { name: true, phone: true } },
+          connection: { select: { connectionNo: true, serviceType: true, address: true } },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { readingDate: 'desc' },
         skip: (parseInt(page as string) - 1) * parseInt(limit as string),
         take: parseInt(limit as string),
       }),
-      prisma.grievance.count({ where }),
+      prisma.meterReading.count({ where }),
     ]);
 
     res.json({
       success: true,
-      data: grievances.map(g => ({
-        ...g,
-        kioskId: null, // kioskId tracking would be added via session
-      })),
+      data: readings,
       pagination: {
         page: parseInt(page as string),
         limit: parseInt(limit as string),
@@ -278,375 +385,62 @@ router.get('/grievances', async (req: AuthReq, res, next) => {
   }
 });
 
-// Get recent activities for live feed
-router.get('/activities', async (req: AuthReq, res, next) => {
+// Verify meter reading
+router.post('/meter-readings/:id/verify', async (req: AuthReq, res, next) => {
   try {
-    const { limit = '10' } = req.query;
-    const limitNum = parseInt(limit as string);
+    const { id } = req.params;
 
-    // Get recent payments, grievances, connections
-    const [payments, grievances, connections] = await Promise.all([
-      prisma.payment.findMany({
-        take: limitNum,
-        where: { status: 'SUCCESS' },
-        orderBy: { createdAt: 'desc' },
-        include: {
-          user: { select: { name: true } },
-          bill: { include: { connection: { select: { serviceType: true } } } },
-        },
-      }),
-      prisma.grievance.findMany({
-        take: limitNum,
-        orderBy: { createdAt: 'desc' },
-        include: { user: { select: { name: true } } },
-      }),
-      prisma.serviceConnection.findMany({
-        take: limitNum,
-        where: { status: 'PENDING' },
-        orderBy: { createdAt: 'desc' },
-        include: { user: { select: { name: true } } },
-      }),
-    ]);
-
-    // Merge and sort all activities
-    const activities = [
-      ...payments.map(p => ({
-        id: p.id,
-        type: 'PAYMENT',
-        description: `Bill payment of ₹${p.amount.toLocaleString()}`,
-        user: p.user.name,
-        serviceType: p.bill?.connection?.serviceType,
-        kioskId: p.kioskId || 'WEB',
-        timestamp: p.createdAt,
-      })),
-      ...grievances.map(g => ({
-        id: g.id,
-        type: 'GRIEVANCE',
-        description: `New complaint: ${g.subject}`,
-        user: g.user.name,
-        serviceType: g.serviceType,
-        kioskId: 'WEB', // kioskId tracking via session
-        timestamp: g.createdAt,
-      })),
-      ...connections.map(c => ({
-        id: c.id,
-        type: 'CONNECTION',
-        description: `New connection application`,
-        user: c.user.name,
-        serviceType: c.serviceType,
-        kioskId: 'WEB',
-        timestamp: c.createdAt,
-      })),
-    ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-      .slice(0, limitNum);
+    const reading = await prisma.meterReading.update({
+      where: { id },
+      data: {
+        status: 'VERIFIED',
+        isVerified: true,
+        verifiedBy: req.user!.id,
+        verifiedAt: new Date(),
+        notes: 'Reading verified by admin',
+      },
+      include: {
+        user: { select: { name: true, phone: true } },
+        connection: { select: { connectionNo: true, serviceType: true } },
+      },
+    });
 
     res.json({
       success: true,
-      data: activities,
+      data: reading,
+      message: 'Meter reading verified successfully',
     });
   } catch (error) {
     next(error);
   }
 });
 
-// ============================================
-// SMART ASSISTANT ANALYTICS
-// ============================================
-
-// Log intent (accessible to all authenticated users)
-router.post('/intent-log', async (req: AuthReq, res, next) => {
+// Reject meter reading
+router.post('/meter-readings/:id/reject', async (req: AuthReq, res, next) => {
   try {
-    const { input, service, action, confidence, route, stepsSaved, wasConfirmed } = req.body;
+    const { id } = req.params;
+    const { reason } = req.body;
 
-    // Note: For demo, we'll create a mock entry since IntentLog may not exist yet
-    // In production, use prisma.intentLog.create
-    const intentLog = {
-      id: `intent_${Date.now()}`,
-      userId: req.user?.id,
-      input,
-      service,
-      action,
-      confidence,
-      route,
-      stepsSaved: stepsSaved || 0,
-      wasConfirmed: wasConfirmed || false,
-      createdAt: new Date(),
-    };
-
-    // Try to log to database, fallback to console
-    try {
-      await (prisma as any).intentLog?.create({ data: intentLog });
-    } catch (dbErr) {
-      console.log('[Smart Assistant] Intent logged:', intentLog);
-    }
-
-    res.json({ success: true, data: intentLog });
-  } catch (error) {
-    next(error);
-  }
-});
-
-// Get intent analytics (admin only)
-router.get('/intent-analytics', async (req: AuthReq, res, next) => {
-  try {
-    const { period = '7d' } = req.query;
-
-    // Calculate date range
-    const now = new Date();
-    let startDate = new Date();
-    switch (period) {
-      case '24h':
-        startDate.setHours(now.getHours() - 24);
-        break;
-      case '7d':
-        startDate.setDate(now.getDate() - 7);
-        break;
-      case '30d':
-        startDate.setDate(now.getDate() - 30);
-        break;
-      default:
-        startDate.setDate(now.getDate() - 7);
-    }
-
-    // Try to fetch from database, otherwise return mock data
-    let stats;
-    try {
-      const intentLogs = await (prisma as any).intentLog?.findMany({
-        where: { createdAt: { gte: startDate } },
-      }) || [];
-
-      // Calculate stats
-      const totalIntents = intentLogs.length;
-      const avgConfidence = intentLogs.length > 0
-        ? intentLogs.reduce((sum: number, log: any) => sum + log.confidence, 0) / intentLogs.length
-        : 0;
-      const totalStepsSaved = intentLogs.reduce((sum: number, log: any) => sum + (log.stepsSaved || 0), 0);
-      const avgStepsSaved = intentLogs.length > 0 ? totalStepsSaved / intentLogs.length : 0;
-
-      // Count by service
-      const serviceBreakdown: Record<string, number> = {};
-      const actionBreakdown: Record<string, number> = {};
-
-      intentLogs.forEach((log: any) => {
-        if (log.service) {
-          serviceBreakdown[log.service] = (serviceBreakdown[log.service] || 0) + 1;
-        }
-        if (log.action) {
-          actionBreakdown[log.action] = (actionBreakdown[log.action] || 0) + 1;
-        }
-      });
-
-      stats = {
-        totalIntents,
-        avgConfidence: Math.round(avgConfidence * 100) / 100,
-        totalStepsSaved,
-        avgStepsSaved: Math.round(avgStepsSaved * 10) / 10,
-        estimatedTimeSaved: Math.round(totalStepsSaved * 5), // 5 seconds per step
-        successRate: intentLogs.filter((l: any) => l.confidence >= 0.5).length / (totalIntents || 1),
-        serviceBreakdown,
-        actionBreakdown,
-        topIntents: Object.entries(actionBreakdown)
-          .sort(([, a], [, b]) => (b as number) - (a as number))
-          .slice(0, 5)
-          .map(([action, count]) => ({ action, count })),
-      };
-    } catch (dbErr) {
-      // Return mock data for demo
-      stats = {
-        totalIntents: 156,
-        avgConfidence: 0.78,
-        totalStepsSaved: 312,
-        avgStepsSaved: 2.0,
-        estimatedTimeSaved: 1560, // seconds
-        successRate: 0.85,
-        serviceBreakdown: {
-          ELECTRICITY: 67,
-          WATER: 45,
-          GAS: 28,
-          MUNICIPAL: 16,
-        },
-        actionBreakdown: {
-          PAY_BILL: 89,
-          FILE_COMPLAINT: 34,
-          CHECK_STATUS: 18,
-          NEW_CONNECTION: 10,
-          VIEW_BILLS: 5,
-        },
-        topIntents: [
-          { action: 'PAY_BILL', count: 89 },
-          { action: 'FILE_COMPLAINT', count: 34 },
-          { action: 'CHECK_STATUS', count: 18 },
-          { action: 'NEW_CONNECTION', count: 10 },
-          { action: 'VIEW_BILLS', count: 5 },
-        ],
-      };
-    }
+    const reading = await prisma.meterReading.update({
+      where: { id },
+      data: {
+        status: 'REJECTED',
+        isVerified: false,
+        verifiedBy: req.user!.id,
+        verifiedAt: new Date(),
+        notes: reason || 'Reading rejected by admin',
+      },
+      include: {
+        user: { select: { name: true, phone: true } },
+        connection: { select: { connectionNo: true, serviceType: true } },
+      },
+    });
 
     res.json({
       success: true,
-      data: {
-        period,
-        ...stats,
-      },
+      data: reading,
+      message: 'Meter reading rejected successfully',
     });
-  } catch (error) {
-    next(error);
-  }
-});
-
-// Get all service connections (admin)
-router.get('/connections', async (req: AuthReq, res, next) => {
-  try {
-    const { status, serviceType, search, page = '1', limit = '20' } = req.query;
-
-    const where: any = {};
-    if (status && status !== 'all') where.status = status as string;
-    if (serviceType && serviceType !== 'all') where.serviceType = serviceType as any;
-    if (search) {
-      where.OR = [
-        { connectionNo: { contains: search as string, mode: 'insensitive' } },
-        { user: { name: { contains: search as string, mode: 'insensitive' } } },
-        { user: { phone: { contains: search as string } } },
-      ];
-    }
-
-    const [connections, total] = await Promise.all([
-      prisma.serviceConnection.findMany({
-        where,
-        include: {
-          user: { select: { id: true, name: true, phone: true } },
-          _count: { select: { bills: true, meterReadings: true } },
-        },
-        orderBy: { createdAt: 'desc' },
-        skip: (parseInt(page as string) - 1) * parseInt(limit as string),
-        take: parseInt(limit as string),
-      }),
-      prisma.serviceConnection.count({ where }),
-    ]);
-
-    res.json({
-      success: true,
-      data: connections,
-      pagination: {
-        page: parseInt(page as string),
-        limit: parseInt(limit as string),
-        total,
-        totalPages: Math.ceil(total / parseInt(limit as string)),
-      },
-    });
-  } catch (error) {
-    next(error);
-  }
-});
-
-// Update connection status
-router.put('/connections/:id/status', async (req: AuthReq, res, next) => {
-  try {
-    const { status, meterNo } = req.body;
-
-    const connection = await prisma.serviceConnection.update({
-      where: { id: req.params.id },
-      data: {
-        status: status as any,
-        meterNo: meterNo || undefined,
-        connectionDate: status === 'ACTIVE' ? new Date() : undefined,
-      },
-      include: { user: true }
-    });
-
-    // Notify user
-    await prisma.notification.create({
-      data: {
-        userId: connection.userId,
-        type: 'SERVICE_UPDATE',
-        title: 'Connection Status Updated',
-        titleHi: 'कनेक्शन की स्थिति अपडेट की गई',
-        message: `Your ${connection.serviceType} connection (${connection.connectionNo}) is now ${status}.`,
-        messageHi: `आपका ${connection.serviceType} कनेक्शन (${connection.connectionNo}) अब ${status} है।`,
-        data: { connectionId: connection.id, status },
-      },
-    });
-
-    res.json({ success: true, data: connection });
-  } catch (error) {
-    next(error);
-  }
-});
-
-
-// Get all service requests (admin)
-router.get('/service-requests', async (req: AuthReq, res, next) => {
-  try {
-    const { status, type, search, page = '1', limit = '20' } = req.query;
-
-    const where: any = {};
-    if (status && status !== 'all') where.status = status as any;
-    if (type && type !== 'all') where.type = type as string;
-    if (search) {
-      where.OR = [
-        { user: { name: { contains: search as string, mode: 'insensitive' } } },
-        { user: { phone: { contains: search as string } } },
-        { connection: { connectionNo: { contains: search as string, mode: 'insensitive' } } },
-      ];
-    }
-
-    const [requests, total] = await Promise.all([
-      prisma.serviceRequest.findMany({
-        where,
-        include: {
-          user: { select: { id: true, name: true, phone: true } },
-          connection: { select: { id: true, connectionNo: true, serviceType: true } },
-        },
-        orderBy: { createdAt: 'desc' },
-        skip: (parseInt(page as string) - 1) * parseInt(limit as string),
-        take: parseInt(limit as string),
-      }),
-      prisma.serviceRequest.count({ where }),
-    ]);
-
-    res.json({
-      success: true,
-      data: requests,
-      pagination: {
-        page: parseInt(page as string),
-        limit: parseInt(limit as string),
-        total,
-        totalPages: Math.ceil(total / parseInt(limit as string)),
-      },
-    });
-  } catch (error) {
-    next(error);
-  }
-});
-
-// Update service request status
-router.put('/service-requests/:id/status', async (req: AuthReq, res, next) => {
-  try {
-    const { status, resolution } = req.body;
-
-    const request = await prisma.serviceRequest.update({
-      where: { id: req.params.id },
-      data: {
-        status: status as any,
-        resolvedAt: status === 'COMPLETED' ? new Date() : undefined,
-      },
-      include: { user: true }
-    });
-
-    // Notify user
-    await prisma.notification.create({
-      data: {
-        userId: request.userId,
-        type: 'SERVICE_UPDATE',
-        title: 'Service Request Update',
-        titleHi: 'सेवा अनुरोध अपडेट',
-        message: `Your request for ${request.type.replace('_', ' ')} is now ${status}.`,
-        messageHi: `आपका ${request.type.replace('_', ' ')} के लिए अनुरोध अब ${status} है।`,
-        data: { requestId: request.id, status },
-      },
-    });
-
-    res.json({ success: true, data: request });
   } catch (error) {
     next(error);
   }

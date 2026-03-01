@@ -5,16 +5,8 @@ import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import path from 'path';
 
-// Load environment variables - try multiple paths for monorepo compatibility
-const envPath = path.join(process.cwd(), 'apps', 'api', '.env');
-const localEnvPath = path.resolve(__dirname, '../.env');
-const result1 = dotenv.config({ path: envPath });
-const result2 = dotenv.config({ path: localEnvPath });
-
-// Debug: Log env loading status
-console.log(`[ENV] Trying path: ${envPath}, loaded: ${!result1.error}`);
-console.log(`[ENV] Trying path: ${localEnvPath}, loaded: ${!result2.error}`);
-console.log(`[ENV] FAST2SMS_API_KEY set: ${!!process.env.FAST2SMS_API_KEY}`);
+// Load environment variables (enhanced for monorepo compatibility)
+dotenv.config();
 
 // Import routes
 import authRoutes from './modules/auth/routes';
@@ -23,22 +15,46 @@ import connectionRoutes from './modules/connection/routes';
 import grievanceRoutes from './modules/grievance/routes';
 import notificationRoutes from './modules/notification/routes';
 import adminRoutes from './modules/admin/routes';
-import sigmRoutes from './modules/sigm/routes';
-import paymentRoutes from './modules/payment/routes';
+import electricityRoutes from './modules/electricity/routes';
+import electricityAdminRoutes from './modules/electricity/admin.routes';
+import gasRoutes from './modules/gas/routes';
+import waterRoutes from './modules/water/routes';
+import municipalRoutes from './modules/municipal/routes';
 import uploadRoutes from './modules/upload/routes';
-import serviceRequestRoutes from './modules/service-request/routes';
+
+// NEW: Import routes from master branch
+import { paymentRoutes } from './modules/payment';
+import { sigmRoutes } from './modules/sigm';
+import { serviceRequestRoutes } from './modules/service-request';
+
+// ...
+
 
 // Import middleware
 import { errorHandler } from './middleware/errorHandler';
 import { requestLogger } from './middleware/logger';
+import { sanitizeInput, validateKioskId } from './middleware/sanitize';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 
 // Security middleware
 app.use(helmet());
+
+// CORS: support multiple origins for local dev + production
+const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:3000')
+  .split(',')
+  .map((origin) => origin.trim().replace(/\/+$/, '')); // strip trailing slashes
+
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(null, false);
+  },
   credentials: true,
 }));
 
@@ -54,6 +70,10 @@ app.use('/api', limiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+// Input sanitization & kiosk ID validation (after body parsing)
+app.use(sanitizeInput);
+app.use(validateKioskId);
+
 // Request logging
 app.use(requestLogger);
 
@@ -62,7 +82,6 @@ app.get('/health', (req, res) => {
   res.json({
     success: true,
     message: 'SUVIDHA API is running',
-    timestamp: new Date().toISOString(),
   });
 });
 
@@ -73,10 +92,18 @@ app.use('/api/connections', connectionRoutes);
 app.use('/api/grievances', grievanceRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/sigm', sigmRoutes);
-app.use('/api/payment', paymentRoutes);
+app.use('/api/electricity', electricityRoutes);
+app.use('/api/admin/electricity', electricityAdminRoutes);
+app.use('/api/gas', gasRoutes);
+app.use('/api/water', waterRoutes);
+app.use('/api/municipal', municipalRoutes);
 app.use('/api/upload', uploadRoutes);
+
+// NEW: Routes from master branch
+app.use('/api/payments', paymentRoutes);
+app.use('/api/sigm', sigmRoutes);
 app.use('/api/service-requests', serviceRequestRoutes);
+
 
 // Error handling
 app.use(errorHandler);
@@ -86,10 +113,13 @@ app.use((req, res) => {
   res.status(404).json({ success: false, error: 'Route not found' });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`🚀 SUVIDHA API running on http://localhost:${PORT}`);
-  console.log(`📋 Health check: http://localhost:${PORT}/health`);
-});
+// Only start the server when NOT running in Vercel (serverless)
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`🚀 SUVIDHA API running on http://localhost:${PORT}`);
+    console.log(`📋 Health check: http://localhost:${PORT}/health`);
+  });
+}
 
 export default app;
+

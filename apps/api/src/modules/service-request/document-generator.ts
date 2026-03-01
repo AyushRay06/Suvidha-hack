@@ -1,32 +1,32 @@
 import { prisma } from '@suvidha/database';
 
 interface ServiceRequestApprovalData {
-  ticketNo: string;
-  requestType: string;
-  status: string;
-  description: string;
-  resolvedAt: Date;
-  user: {
-    name: string;
-    phone: string;
-    address?: string;
-  };
-  connection?: {
-    connectionNo: string;
-    serviceType: string;
-    address: string;
-    city: string;
-  };
+    ticketNo: string;
+    requestType: string;
+    status: string;
+    description: string;
+    resolvedAt: Date;
+    user: {
+        name: string;
+        phone: string;
+        address?: string;
+    };
+    connection?: {
+        connectionNo: string;
+        serviceType: string;
+        address: string;
+        city: string;
+    };
 }
 
 /**
  * Generate Approval Certificate HTML
  */
 export function generateApprovalHTML(data: any, language: 'en' | 'hi' = 'en'): string {
-  const isHindi = language === 'hi';
-  const date = data.resolvedAt ? new Date(data.resolvedAt) : new Date();
+    const isHindi = language === 'hi';
+    const date = data.resolvedAt ? new Date(data.resolvedAt) : new Date();
 
-  return `
+    return `
 <!DOCTYPE html>
 <html lang="${language}">
 <head>
@@ -149,10 +149,10 @@ export function generateApprovalHTML(data: any, language: 'en' | 'hi' = 'en'): s
  * Generate Sanction Letter HTML
  */
 export function generateSanctionLetterHTML(data: any, language: 'en' | 'hi' = 'en'): string {
-  const isHindi = language === 'hi';
-  const date = data.connectionDate ? new Date(data.connectionDate) : new Date();
+    const isHindi = language === 'hi';
+    const date = data.connectionDate ? new Date(data.connectionDate) : new Date();
 
-  return `
+    return `
 <!DOCTYPE html>
 <html lang="${language}">
 <head>
@@ -245,31 +245,31 @@ export function generateSanctionLetterHTML(data: any, language: 'en' | 'hi' = 'e
  * Fetch data for sanction letter
  */
 export async function getSanctionLetterData(connectionId: string, userId: string) {
-  return prisma.serviceConnection.findFirst({
-    where: {
-      id: connectionId,
-      userId,
-      status: 'ACTIVE'
-    },
-    include: {
-      user: true
-    }
-  });
+    return prisma.serviceConnection.findFirst({
+        where: {
+            id: connectionId,
+            userId,
+            status: 'ACTIVE'
+        },
+        include: {
+            user: true
+        }
+    });
 }
 
 /**
  * Fetch data for service request document
  */
 export async function getApprovalDocumentData(requestId: string, userId: string) {
-  return prisma.serviceRequest.findFirst({
-    where: {
-      id: requestId,
-      userId,
-      status: 'COMPLETED'
-    },
-    include: {
-      user: true,
-      connection: true
-    }
-  });
+    return prisma.serviceRequest.findFirst({
+        where: {
+            id: requestId,
+            userId,
+            status: 'COMPLETED'
+        },
+        include: {
+            user: true,
+            connection: true
+        }
+    });
 }

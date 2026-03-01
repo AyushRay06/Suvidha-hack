@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import {
     ArrowLeft,
     Mic,
+    MicOff,
     MessageSquare,
     Zap,
     Flame,
@@ -18,6 +19,7 @@ import {
     Sparkles,
     HelpCircle,
     RotateCcw,
+    Volume2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +31,8 @@ import {
     calculateStepsSaved,
     type ParsedIntent,
 } from "@/lib/intent-parser";
+import { useVoiceRecognition } from "@/lib/hooks/useVoiceRecognition";
+import { useTTS } from "@/lib/hooks/useTTS";
 
 const SERVICE_ICONS = {
     ELECTRICITY: { icon: Zap, color: "text-electricity bg-electricity-light" },
@@ -50,6 +54,31 @@ export default function SmartAssistantPage() {
     const [isProcessing, setIsProcessing] = useState(false);
     const [showResult, setShowResult] = useState(false);
 
+    // Voice Recognition
+    const {
+        isListening,
+        transcript,
+        startListening,
+        stopListening,
+        isSupported: voiceSupported,
+        error: voiceError,
+    } = useVoiceRecognition({
+        lang: i18n.language,
+        onResult: (text) => {
+            processInput(text);
+        },
+    });
+
+    // Text-to-Speech
+    const { speak, isSpeaking } = useTTS();
+
+    // Update input field with interim transcript
+    useEffect(() => {
+        if (isListening && transcript) {
+            setInput(transcript);
+        }
+    }, [transcript, isListening]);
+
     // Authentication check
     useEffect(() => {
         if (!isAuthenticated) {
@@ -57,7 +86,7 @@ export default function SmartAssistantPage() {
         }
     }, [isAuthenticated, router]);
 
-    // Focus input on mount
+    // Focus input on mount + announce page for screen readers
     useEffect(() => {
         if (inputRef.current) {
             inputRef.current.focus();
@@ -78,6 +107,12 @@ export default function SmartAssistantPage() {
         setIntent(parsed);
         setShowResult(true);
         setIsProcessing(false);
+
+        // Speak the result via TTS
+        const message = isHindi
+            ? parsed.confirmationMessage.hi
+            : parsed.confirmationMessage.en;
+        speak(message, i18n.language);
 
         // Log intent for analytics (if authenticated)
         if (isAuthenticated && tokens?.accessToken) {
@@ -118,18 +153,28 @@ export default function SmartAssistantPage() {
         processInput(phrase);
     };
 
+    // Toggle voice
+    const toggleVoice = () => {
+        if (isListening) {
+            stopListening();
+        } else {
+            startListening();
+        }
+    };
+
     // Confirm and navigate
     const handleConfirm = () => {
         if (intent?.suggestedRoute) {
-            // Show success toast
+            const msg = isHindi ? "सही दिशा में ले जा रहे हैं" : "Navigating to the right place";
+            speak(msg, i18n.language);
+
             toast({
-                title: isHindi ? "सही दिशा में ले जा रहे हैं" : "Navigating to the right place",
+                title: msg,
                 description: isHindi
                     ? `${calculateStepsSaved(intent.action, intent.service)} कदम बचाए गए!`
                     : `Saved ${calculateStepsSaved(intent.action, intent.service)} navigation steps!`,
             });
 
-            // Navigate after short delay
             setTimeout(() => {
                 router.push(intent.suggestedRoute!);
             }, 300);
@@ -166,7 +211,11 @@ export default function SmartAssistantPage() {
             <header className="bg-gradient-to-r from-primary to-cta text-white py-6 px-6">
                 <div className="max-w-2xl mx-auto">
                     <div className="flex items-center gap-4">
-                        <Link href={isAuthenticated ? "/dashboard" : "/"} className="hover:opacity-80">
+                        <Link
+                            href={isAuthenticated ? "/dashboard" : "/"}
+                            className="hover:opacity-80"
+                            aria-label={isHindi ? "वापस जाएं" : "Go back"}
+                        >
                             <ArrowLeft className="w-6 h-6" />
                         </Link>
                         <div className="flex-1">
@@ -178,34 +227,96 @@ export default function SmartAssistantPage() {
                             </div>
                             <p className="text-white/80 text-sm mt-1">
                                 {isHindi
-                                    ? "बस बताइए आप क्या करना चाहते हैं"
-                                    : "Just tell me what you want to do"}
+                                    ? "बताइए या बोलिए आप क्या करना चाहते हैं"
+                                    : "Type or speak what you want to do"}
                             </p>
                         </div>
                     </div>
                 </div>
             </header>
 
-            <main className="max-w-2xl mx-auto p-6">
+            <main className="max-w-2xl mx-auto p-6" aria-live="polite">
                 {/* Input Section */}
                 {!showResult && (
                     <div className="space-y-6 animate-fadeIn">
-                        {/* Text Input */}
+                        {/* Listening Indicator */}
+                        {isListening && (
+                            <div className="bg-cta/10 border-2 border-cta/30 rounded-2xl p-6 text-center animate-pulse">
+                                <div className="flex items-center justify-center gap-3 mb-2">
+                                    <div className="w-4 h-4 bg-cta rounded-full animate-ping" />
+                                    <span className="text-lg font-bold text-cta">
+                                        {isHindi ? "🎤 सुन रहे हैं..." : "🎤 Listening..."}
+                                    </span>
+                                </div>
+                                {transcript && (
+                                    <p className="text-sm text-slate-600 mt-2">
+                                        &quot;{transcript}&quot;
+                                    </p>
+                                )}
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={stopListening}
+                                    className="mt-3"
+                                    aria-label={isHindi ? "सुनना बंद करें" : "Stop listening"}
+                                >
+                                    <MicOff className="w-4 h-4 mr-1" />
+                                    {isHindi ? "रोकें" : "Stop"}
+                                </Button>
+                            </div>
+                        )}
+
+                        {/* Voice Error */}
+                        {voiceError && (
+                            <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700" role="alert">
+                                {voiceError}
+                            </div>
+                        )}
+
+                        {/* Text Input + Mic */}
                         <form onSubmit={handleSubmit} className="space-y-4">
-                            <div className="relative">
-                                <Input
-                                    ref={inputRef}
-                                    value={input}
-                                    onChange={(e) => setInput(e.target.value)}
-                                    placeholder={
-                                        isHindi
-                                            ? "जैसे: मेरा बिजली बिल भुगतान करें..."
-                                            : "e.g., Pay my electricity bill..."
-                                    }
-                                    className="h-16 text-lg pl-14 pr-4 rounded-2xl border-2 border-primary/20 focus:border-cta shadow-lg"
-                                    disabled={isProcessing}
-                                />
-                                <MessageSquare className="absolute left-5 top-1/2 -translate-y-1/2 w-6 h-6 text-primary/40" />
+                            <div className="relative flex gap-2">
+                                <div className="relative flex-1">
+                                    <Input
+                                        ref={inputRef}
+                                        value={input}
+                                        onChange={(e) => setInput(e.target.value)}
+                                        placeholder={
+                                            isHindi
+                                                ? "जैसे: मेरा बिजली बिल भुगतान करें..."
+                                                : "e.g., Pay my electricity bill..."
+                                        }
+                                        className="h-16 text-lg pl-14 pr-4 rounded-2xl border-2 border-primary/20 focus:border-cta shadow-lg"
+                                        disabled={isProcessing || isListening}
+                                        aria-label={isHindi ? "अपना अनुरोध टाइप करें" : "Type your request"}
+                                    />
+                                    <MessageSquare className="absolute left-5 top-1/2 -translate-y-1/2 w-6 h-6 text-primary/40" aria-hidden="true" />
+                                </div>
+
+                                {/* Mic Button */}
+                                {voiceSupported && (
+                                    <button
+                                        type="button"
+                                        onClick={toggleVoice}
+                                        className={`h-16 w-16 rounded-2xl flex items-center justify-center transition-all shadow-lg flex-shrink-0 ${
+                                            isListening
+                                                ? "bg-red-500 text-white animate-pulse"
+                                                : "bg-cta text-white hover:bg-cta/90"
+                                        }`}
+                                        aria-label={
+                                            isListening
+                                                ? (isHindi ? "सुनना बंद करें" : "Stop listening")
+                                                : (isHindi ? "बोलकर बताएं" : "Speak your request")
+                                        }
+                                        disabled={isProcessing}
+                                    >
+                                        {isListening ? (
+                                            <MicOff className="w-7 h-7" />
+                                        ) : (
+                                            <Mic className="w-7 h-7" />
+                                        )}
+                                    </button>
+                                )}
                             </div>
 
                             <Button
@@ -248,8 +359,9 @@ export default function SmartAssistantPage() {
                                     key={phrase.id}
                                     onClick={() => handleQuickPhrase(isHindi ? phrase.hi : phrase.en)}
                                     className="flex items-center gap-3 p-4 bg-white rounded-xl border-2 border-slate-100 hover:border-cta hover:shadow-md transition-all text-left group"
+                                    aria-label={isHindi ? phrase.hi : phrase.en}
                                 >
-                                    <span className="text-2xl">{phrase.icon}</span>
+                                    <span className="text-2xl" aria-hidden="true">{phrase.icon}</span>
                                     <span className="text-sm font-medium text-slate-700 group-hover:text-cta">
                                         {isHindi ? phrase.hi : phrase.en}
                                     </span>
@@ -259,7 +371,7 @@ export default function SmartAssistantPage() {
 
                         {/* Help text */}
                         <div className="bg-slate-50 rounded-xl p-4 flex items-start gap-3">
-                            <HelpCircle className="w-5 h-5 text-muted-foreground flex-shrink-0 mt-0.5" />
+                            <HelpCircle className="w-5 h-5 text-muted-foreground flex-shrink-0 mt-0.5" aria-hidden="true" />
                             <div className="text-sm text-muted-foreground">
                                 <p className="font-medium text-slate-700 mb-1">
                                     {isHindi ? "सहायता" : "Tips"}
@@ -267,13 +379,13 @@ export default function SmartAssistantPage() {
                                 <ul className="space-y-1">
                                     <li>
                                         {isHindi
-                                            ? "• आप हिंदी या अंग्रेजी में लिख सकते हैं"
-                                            : "• You can type in Hindi or English"}
+                                            ? "• आप हिंदी या अंग्रेजी में लिख या बोल सकते हैं"
+                                            : "• You can type or speak in Hindi or English"}
                                     </li>
                                     <li>
                                         {isHindi
-                                            ? "• जैसे: 'पानी की शिकायत करनी है'"
-                                            : "• Example: 'I want to complain about water'"}
+                                            ? "• 🎤 बटन दबाकर बोलिए"
+                                            : "• Press the 🎤 button to speak"}
                                     </li>
                                     <li>
                                         {isHindi
@@ -355,6 +467,7 @@ export default function SmartAssistantPage() {
                                         size="xl"
                                         onClick={handleReset}
                                         className="gap-2"
+                                        aria-label={isHindi ? "दोबारा कोशिश करें" : "Try a different request"}
                                     >
                                         <RotateCcw className="w-5 h-5" />
                                         {isHindi ? "बदलें" : "Change"}
@@ -364,6 +477,7 @@ export default function SmartAssistantPage() {
                                         size="xl"
                                         onClick={handleConfirm}
                                         className="gap-2"
+                                        aria-label={isHindi ? "इस सेवा पर आगे बढ़ें" : "Continue to this service"}
                                     >
                                         {isHindi ? "आगे बढ़ें" : "Continue"}
                                         <ArrowRight className="w-5 h-5" />
@@ -413,6 +527,7 @@ export default function SmartAssistantPage() {
                                         size="xl"
                                         onClick={handleReset}
                                         className="w-full gap-2"
+                                        aria-label={isHindi ? "दोबारा कोशिश करें" : "Try again"}
                                     >
                                         <RotateCcw className="w-5 h-5" />
                                         {isHindi ? "दोबारा कोशिश करें" : "Try Again"}
@@ -422,6 +537,7 @@ export default function SmartAssistantPage() {
                                         size="xl"
                                         onClick={handleFallback}
                                         className="w-full gap-2"
+                                        aria-label={isHindi ? "मेनू से चुनें" : "Choose from menu"}
                                     >
                                         {isHindi ? "मेनू से चुनें" : "Choose from Menu"}
                                         <ArrowRight className="w-5 h-5" />
@@ -430,12 +546,12 @@ export default function SmartAssistantPage() {
                             </>
                         )}
 
-                        {/* What user typed */}
+                        {/* What user typed/said */}
                         <div className="bg-slate-50 rounded-xl p-4">
                             <p className="text-xs text-muted-foreground mb-1">
                                 {isHindi ? "आपने कहा:" : "You said:"}
                             </p>
-                            <p className="text-slate-700 font-medium">"{intent.originalInput}"</p>
+                            <p className="text-slate-700 font-medium">&quot;{intent.originalInput}&quot;</p>
                         </div>
                     </div>
                 )}

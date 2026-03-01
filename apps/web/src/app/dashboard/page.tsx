@@ -54,12 +54,6 @@ export default function DashboardPage() {
       return;
     }
 
-    // Redirect admins/staff away from citizen dashboard
-    if (user?.role === "ADMIN" || user?.role === "STAFF") {
-      router.push("/admin");
-      return;
-    }
-
     fetchDashboardData();
   }, [isAuthenticated, user, router]);
 
@@ -112,117 +106,160 @@ export default function DashboardPage() {
     { id: "grievances", name: t("actions.grievances"), icon: MessageSquare, href: "/grievances" },
     { id: "requests", name: "Service Requests", icon: Activity, href: "/service-requests" },
     { id: "notifications", name: t("actions.notifications"), icon: Bell, href: "/notifications" },
+    { id: "profile", name: t("actions.myProfile"), icon: User, href: "/profile" },
   ];
 
   if (!isAuthenticated) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-primary text-white py-4 px-6">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <div>
-            <p className="text-white/70 text-sm">{t("dashboard.welcomeBack")}</p>
-            <h1 className="font-heading text-xl font-bold">{user?.name}</h1>
+      <header className="bg-primary text-white py-6 lg:py-8 px-6 lg:px-8 shadow-lg sticky top-0 z-40">
+        <div className="max-w-full mx-auto flex items-center justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <p className={`text-white/70 ${typeof window !== 'undefined' && window.innerWidth >= 1024 ? 'text-base' : 'text-xs'}`}>
+              {t("dashboard.welcomeBack")},
+            </p>
+            <h1 className={`font-heading font-bold text-white truncate ${typeof window !== 'undefined' && window.innerWidth >= 1024 ? 'text-3xl' : 'text-2xl'}`}>
+              {user?.name}
+            </h1>
           </div>
-          <div className="flex items-center gap-3">
-            {(user?.role === "ADMIN" || user?.role === "STAFF") && (
-              <Link href="/admin">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-white hover:bg-white/10"
-                >
-                  {t("dashboard.adminPanel")}
-                </Button>
-              </Link>
-            )}
+          <div className="flex items-center gap-3 lg:gap-4 flex-shrink-0">
             <LanguageToggle />
             <Button
               variant="ghost"
               size="sm"
               onClick={handleLogout}
-              className="text-white hover:bg-white/10"
+              className="text-white hover:bg-white/10 text-xs lg:text-base px-2 lg:px-3 py-2 lg:py-2"
             >
-              <LogOut className="w-4 h-4 mr-2" />
-              {t("auth.logout")}
+              <LogOut className="w-4 h-4 lg:w-5 lg:h-5 lg:mr-2" />
+              <span className="hidden lg:inline">{t("auth.logout")}</span>
             </Button>
           </div>
         </div>
       </header>
 
-      <div className="max-w-4xl mx-auto px-6 py-8">
+      <div className="max-w-full mx-auto px-6 lg:px-8 py-8 lg:py-10">
         {/* Pending Bills Alert */}
         {pendingBills.length > 0 && (
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5" />
-            <div>
-              <p className="font-medium text-amber-800">
+          <div className="alert-box alert-warning mb-8 lg:mb-10">
+            <AlertCircle className="w-6 h-6 lg:w-8 lg:h-8 flex-shrink-0 mt-1" />
+            <div className="flex-1">
+              <p className={`font-bold text-yellow-900 ${typeof window !== 'undefined' && window.innerWidth >= 1024 ? 'text-lg' : 'text-base'}`}>
                 {t("dashboard.pendingBillsAlert", { count: pendingBills.length })}
               </p>
-              <p className="text-sm text-amber-700">
-                {t("dashboard.total")}: ₹{pendingBills.reduce((sum, b) => sum + b.amount, 0).toLocaleString()}
+              <p className={`text-yellow-800 mt-1 ${typeof window !== 'undefined' && window.innerWidth >= 1024 ? 'text-base' : 'text-sm'}`}>
+                Total: ₹{pendingBills.reduce((sum, b) => sum + b.amount, 0).toLocaleString()}
               </p>
             </div>
-            <Link href="/bills" className="ml-auto">
-              <Button size="sm" variant="cta">
-                {t("dashboard.payNow")}
+            <Link href="/bills" className="flex-shrink-0">
+              <Button size="sm" variant="cta" className="kiosk-button text-sm lg:text-base">
+                {t("bills.payNow")}
               </Button>
             </Link>
           </div>
         )}
 
-        {/* Smart Assistant - Prominent Feature */}
-        <section className="mb-8">
-          <Link href="/assistant">
-            <div className="relative overflow-hidden bg-gradient-to-r from-cta via-cta to-primary rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all cursor-pointer group">
-              {/* Animated background effect */}
-              <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
-
-              <div className="relative flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                    <Sparkles className="w-8 h-8 text-white animate-pulse" />
-                  </div>
-                  <div className="text-left">
-                    <h3 className="text-xl font-bold text-white">
-                      {t("dashboard.tellMe")}
-                    </h3>
-                    <p className="text-white/80 text-sm">
-                      {t("dashboard.skipMenus")}
-                    </p>
-                  </div>
-                </div>
-                <div className="hidden md:flex items-center gap-2 text-white/70 group-hover:text-white transition-colors">
-                  <span className="text-sm font-medium">
-                    {t("dashboard.tryNow")}
-                  </span>
-                  <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
+        {/* Select a Service */}
+        <section className="mb-12 lg:mb-16">
+          <div className="section-header mb-8">
+            {t("dashboard.selectService")}
+          </div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+            {/* Electricity */}
+            <Link
+              href="/services/electricity"
+              className="kiosk-card group flex flex-col items-center text-center gap-4 p-6 lg:p-8 hover:shadow-lg hover:-translate-y-2"
+            >
+              <div className="w-20 lg:w-24 h-20 lg:h-24 bg-electricity-light rounded-2xl lg:rounded-3xl flex items-center justify-center group-hover:bg-electricity transition-all">
+                <Zap className="w-10 lg:w-12 h-10 lg:h-12 text-electricity group-hover:text-white transition-colors" />
               </div>
-            </div>
-          </Link>
+              <div>
+                <h3 className={`font-semibold text-primary mb-1 ${typeof window !== 'undefined' && window.innerWidth >= 1024 ? 'text-lg' : 'text-base'}`}>
+                  {t("services.electricity")}
+                </h3>
+                <p className={`text-muted-foreground line-clamp-2 ${typeof window !== 'undefined' && window.innerWidth >= 1024 ? 'text-sm' : 'text-xs'}`}>
+                  {t("services.electricityDesc")}
+                </p>
+              </div>
+            </Link>
+
+            {/* Gas */}
+            <Link
+              href="/services/gas"
+              className="kiosk-card group flex flex-col items-center text-center gap-4 p-6 lg:p-8 hover:shadow-lg hover:-translate-y-2"
+            >
+              <div className="w-20 lg:w-24 h-20 lg:h-24 bg-gas-light rounded-2xl lg:rounded-3xl flex items-center justify-center group-hover:bg-gas transition-all">
+                <Flame className="w-10 lg:w-12 h-10 lg:h-12 text-gas group-hover:text-white transition-colors" />
+              </div>
+              <div>
+                <h3 className={`font-semibold text-primary mb-1 ${typeof window !== 'undefined' && window.innerWidth >= 1024 ? 'text-lg' : 'text-base'}`}>
+                  {t("services.gas")}
+                </h3>
+                <p className={`text-muted-foreground line-clamp-2 ${typeof window !== 'undefined' && window.innerWidth >= 1024 ? 'text-sm' : 'text-xs'}`}>
+                  {t("services.gasDesc")}
+                </p>
+              </div>
+            </Link>
+
+            {/* Water */}
+            <Link
+              href="/services/water"
+              className="kiosk-card group flex flex-col items-center text-center gap-4 p-6 lg:p-8 hover:shadow-lg hover:-translate-y-2"
+            >
+              <div className="w-20 lg:w-24 h-20 lg:h-24 bg-water-light rounded-2xl lg:rounded-3xl flex items-center justify-center group-hover:bg-water transition-all">
+                <Droplets className="w-10 lg:w-12 h-10 lg:h-12 text-water group-hover:text-white transition-colors" />
+              </div>
+              <div>
+                <h3 className={`font-semibold text-primary mb-1 ${typeof window !== 'undefined' && window.innerWidth >= 1024 ? 'text-lg' : 'text-base'}`}>
+                  {t("services.water")}
+                </h3>
+                <p className={`text-muted-foreground line-clamp-2 ${typeof window !== 'undefined' && window.innerWidth >= 1024 ? 'text-sm' : 'text-xs'}`}>
+                  {t("services.waterDesc")}
+                </p>
+              </div>
+            </Link>
+
+            {/* Municipal */}
+            <Link
+              href="/services/municipal"
+              className="kiosk-card group flex flex-col items-center text-center gap-4 p-6 lg:p-8 hover:shadow-lg hover:-translate-y-2"
+            >
+              <div className="w-20 lg:w-24 h-20 lg:h-24 bg-municipal-light rounded-2xl lg:rounded-3xl flex items-center justify-center group-hover:bg-municipal transition-all">
+                <Building2 className="w-10 lg:w-12 h-10 lg:h-12 text-municipal group-hover:text-white transition-colors" />
+              </div>
+              <div>
+                <h3 className={`font-semibold text-primary mb-1 ${typeof window !== 'undefined' && window.innerWidth >= 1024 ? 'text-lg' : 'text-base'}`}>
+                  {t("services.municipal")}
+                </h3>
+                <p className={`text-muted-foreground line-clamp-2 ${typeof window !== 'undefined' && window.innerWidth >= 1024 ? 'text-sm' : 'text-xs'}`}>
+                  {t("services.municipalDesc")}
+                </p>
+              </div>
+            </Link>
+          </div>
         </section>
 
         {/* Quick Links */}
-        <section className="mb-8">
-          <h2 className="font-heading text-lg text-primary mb-4 flex items-center gap-2">
-            <span className="w-1 h-5 bg-cta rounded-full"></span>
+        <section className="mb-12 lg:mb-16">
+          <div className="section-header mb-8">
             {t("dashboard.quickActions")}
-          </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          </div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
             {quickLinks.map((link) => (
               <Link
                 key={link.id}
                 href={link.href}
-                className="kiosk-card flex flex-col items-center text-center p-6 hover:border-cta border-2 border-transparent relative"
+                className="kiosk-card group flex flex-col items-center text-center gap-3 p-6 lg:p-8 hover:shadow-lg hover:-translate-y-2 relative"
               >
-                <link.icon className="w-8 h-8 text-cta mb-3" />
-                <span className="font-medium text-primary">{link.name}</span>
+                <div className="w-16 lg:w-20 h-16 lg:h-20 bg-cta-light rounded-2xl lg:rounded-3xl flex items-center justify-center group-hover:bg-cta transition-colors">
+                  <link.icon className={`${typeof window !== 'undefined' && window.innerWidth >= 1024 ? 'w-8 h-8' : 'w-7 h-7'} text-cta group-hover:text-white transition-colors`} />
+                </div>
+                <span className={`font-semibold text-primary ${typeof window !== 'undefined' && window.innerWidth >= 1024 ? 'text-lg' : 'text-base'}`}>
+                  {link.name}
+                </span>
                 {link.count && link.count > 0 && (
-                  <span className="absolute top-3 right-3 bg-cta text-white text-xs px-2 py-0.5 rounded-full">
+                  <span className="absolute top-4 right-4 bg-destructive text-white text-xs lg:text-sm font-bold px-2.5 py-1.5 lg:px-3 lg:py-2 rounded-full">
                     {link.count}
                   </span>
                 )}
@@ -232,16 +269,17 @@ export default function DashboardPage() {
         </section>
 
         {/* My Connections */}
-        <section className="mb-8">
-          <h2 className="font-heading text-lg text-primary mb-4 flex items-center gap-2">
-            <span className="w-1 h-5 bg-cta rounded-full"></span>
-            {t("dashboard.myConnections")}
-          </h2>
+        <section className="mb-12 lg:mb-16">
+          <div className="section-header mb-8">
+            My Service Connections
+          </div>
 
           {loading ? (
-            <div className="text-center py-8 text-muted-foreground">{t("common.loading")}</div>
+            <div className={`text-center py-12 text-muted-foreground ${typeof window !== 'undefined' && window.innerWidth >= 1024 ? 'text-lg' : 'text-base'}`}>
+              Loading...
+            </div>
           ) : connections.length > 0 ? (
-            <div className="space-y-3">
+            <div className="space-y-4 lg:space-y-5">
               {connections.map((conn) => {
                 const svc = serviceIcons[conn.serviceType] || serviceIcons.ELECTRICITY;
                 const Icon = svc.icon;
@@ -249,22 +287,23 @@ export default function DashboardPage() {
                   <Link
                     key={conn.id}
                     href={`/services/${conn.serviceType.toLowerCase()}`}
-                    className="kiosk-card flex items-center gap-4 hover:border-cta border-2 border-transparent"
+                    className="kiosk-card-small flex items-center gap-4 lg:gap-6 hover:shadow-lg hover:-translate-y-1 group"
                   >
-                    <div className={`w-12 h-12 ${svc.bg} rounded-lg flex items-center justify-center`}>
-                      <Icon className={`w-6 h-6 ${svc.color}`} />
+                    <div className={`w-14 lg:w-16 h-14 lg:h-16 ${svc.bg} rounded-xl lg:rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform`}>
+                      <Icon className={`w-7 lg:w-8 h-7 lg:h-8 ${svc.color}`} />
                     </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-primary">{conn.serviceType}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {t("dashboard.connection")}: {conn.connectionNumber}
+                    <div className="flex-1 min-w-0">
+                      <p className={`font-semibold text-primary ${typeof window !== 'undefined' && window.innerWidth >= 1024 ? 'text-lg' : 'text-base'}`}>
+                        {conn.serviceType}
+                      </p>
+                      <p className={`text-muted-foreground truncate ${typeof window !== 'undefined' && window.innerWidth >= 1024 ? 'text-sm' : 'text-xs'}`}>
+                        Connection: {conn.connectionNumber}
                       </p>
                     </div>
-                    <span className={`px-2 py-1 text-xs rounded-full ${conn.status === "ACTIVE" ? "bg-success/10 text-success" : "bg-slate-100 text-slate-600"
-                      }`}>
+                    <span className={`status-badge ${conn.status === "ACTIVE" ? "status-active" : "status-inactive"} flex-shrink-0`}>
                       {conn.status}
                     </span>
-                    <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                    <ChevronRight className="w-5 lg:w-6 h-5 lg:h-6 text-muted-foreground flex-shrink-0" />
                   </Link>
                 );
               })}
@@ -280,10 +319,14 @@ export default function DashboardPage() {
               </Link>
             </div>
           ) : (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground mb-4">{t("dashboard.noConnections")}</p>
+            <div className="text-center py-12 lg:py-16">
+              <p className={`text-muted-foreground mb-6 ${typeof window !== 'undefined' && window.innerWidth >= 1024 ? 'text-lg' : 'text-base'}`}>
+                No active connections yet
+              </p>
               <Link href="/connections/new">
-                <Button variant="cta">{t("dashboard.applyNewConnection")}</Button>
+                <Button className="kiosk-button bg-cta text-white">
+                  Apply for New Connection
+                </Button>
               </Link>
             </div>
           )}
@@ -292,31 +335,38 @@ export default function DashboardPage() {
         {/* Recent Bills */}
         {pendingBills.length > 0 && (
           <section>
-            <h2 className="font-heading text-lg text-primary mb-4 flex items-center gap-2">
-              <span className="w-1 h-5 bg-cta rounded-full"></span>
-              {t("dashboard.pendingBills")}
-            </h2>
-            <div className="space-y-3">
+            <div className="section-header mb-8">
+              Pending Bills
+            </div>
+            <div className="space-y-4 lg:space-y-5">
               {pendingBills.map((bill) => {
                 const svc = serviceIcons[bill.serviceType] || serviceIcons.ELECTRICITY;
                 const Icon = svc.icon;
                 return (
                   <div
                     key={bill.id}
-                    className="kiosk-card flex items-center gap-4"
+                    className="kiosk-card-small flex items-center gap-4 lg:gap-6"
                   >
-                    <div className={`w-10 h-10 ${svc.bg} rounded-lg flex items-center justify-center`}>
-                      <Icon className={`w-5 h-5 ${svc.color}`} />
+                    <div className={`w-14 lg:w-16 h-14 lg:h-16 ${svc.bg} rounded-xl lg:rounded-2xl flex items-center justify-center flex-shrink-0`}>
+                      <Icon className={`w-7 lg:w-8 h-7 lg:h-8 ${svc.color}`} />
                     </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-primary">{bill.serviceType}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {t("bills.due")}: {new Date(bill.dueDate).toLocaleDateString()}
+                    <div className="flex-1 min-w-0">
+                      <p className={`font-semibold text-primary ${typeof window !== 'undefined' && window.innerWidth >= 1024 ? 'text-lg' : 'text-base'}`}>
+                        {bill.serviceType}
+                      </p>
+                      <p className={`text-muted-foreground ${typeof window !== 'undefined' && window.innerWidth >= 1024 ? 'text-sm' : 'text-xs'}`}>
+                        Due: {new Date(bill.dueDate).toLocaleDateString()}
                       </p>
                     </div>
-                    <p className="font-bold text-lg">₹{bill.amount.toLocaleString()}</p>
-                    <Link href={`/bills/${bill.id}/pay`}>
-                      <Button size="sm" variant="cta">{t("bills.pay")}</Button>
+                    <div className={`text-right flex-shrink-0 ${typeof window !== 'undefined' && window.innerWidth >= 1024 ? 'mr-4' : ''}`}>
+                      <p className={`font-bold text-cta ${typeof window !== 'undefined' && window.innerWidth >= 1024 ? 'text-2xl' : 'text-lg'}`}>
+                        ₹{bill.amount.toLocaleString()}
+                      </p>
+                    </div>
+                    <Link href={`/bills/${bill.id}/pay`} className="flex-shrink-0">
+                      <Button className="kiosk-button bg-cta text-white text-sm lg:text-base">
+                        Pay
+                      </Button>
                     </Link>
                   </div>
                 );

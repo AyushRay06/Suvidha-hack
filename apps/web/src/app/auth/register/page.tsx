@@ -128,11 +128,9 @@ export default function RegisterPage() {
           description: `Welcome, ${data.data.user.name}!`,
           variant: "success",
         });
-        if (data.data.user.role === "ADMIN" || data.data.user.role === "STAFF") {
-          router.push("/admin");
-        } else {
-          router.push("/dashboard");
-        }
+        const urlParam = new URLSearchParams(window.location.search).get('returnUrl');
+        const redirectUrl = urlParam ? decodeURIComponent(urlParam) : "/dashboard";
+        router.push(redirectUrl);
       } else {
         throw new Error(data.error || "Registration failed");
       }

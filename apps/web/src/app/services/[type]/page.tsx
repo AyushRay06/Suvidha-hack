@@ -19,6 +19,11 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/lib/store/auth";
+import { ElectricityDashboard } from "@/components/electricity/electricity-dashboard";
+import { GasDashboard } from "@/components/gas/gas-dashboard";
+import { WaterDashboard } from "@/components/water/water-dashboard";
+import { MunicipalDashboard } from "@/components/municipal/municipal-dashboard";
+
 
 interface Connection {
   id: string;
@@ -96,7 +101,8 @@ export default function ServicePage() {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      router.push("/auth/login");
+      const returnUrl = encodeURIComponent(`/services/${serviceType}`);
+      router.push(`/auth/login?returnUrl=${returnUrl}`);
       return;
     }
     if (!config) {
@@ -137,6 +143,20 @@ export default function ServicePage() {
   };
 
   if (!config || !isAuthenticated) return null;
+
+  // Use dedicated dashboards for each service
+  if (serviceType?.toLowerCase() === 'electricity') {
+    return <ElectricityDashboard />;
+  }
+  if (serviceType?.toLowerCase() === 'gas') {
+    return <GasDashboard />;
+  }
+  if (serviceType?.toLowerCase() === 'water') {
+    return <WaterDashboard />;
+  }
+  if (serviceType?.toLowerCase() === 'municipal') {
+    return <MunicipalDashboard />;
+  }
 
   const Icon = config.icon;
   const displayName = i18n.language === "hi" ? config.nameHi : config.name;
@@ -192,9 +212,7 @@ export default function ServicePage() {
                 href={
                   feature.includes("Bill") ? "/bills" :
                     feature.includes("Connection") ? "/connections/new" :
-                      feature.includes("Request") ? "/service-requests/new" :
-                        feature.includes("Reading") ? "/connections" :
-                          "/grievances/new"
+                      "/grievances/new"
                 }
                 className="kiosk-card flex flex-col items-center text-center p-4 hover:border-cta border-2 border-transparent"
               >

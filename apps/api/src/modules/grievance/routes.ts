@@ -80,7 +80,8 @@ const createGrievanceSchema = z.object({
   connectionId: z.string().optional(),
   category: z.string().min(2),
   subject: z.string().min(5).max(200),
-  description: z.string().min(10).max(2000), // Reduced minimum for better UX
+  description: z.string().min(20).max(2000),
+  photoUrl: z.string().url().optional(), // Cloudinary image URL
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']).optional(),
 });
 

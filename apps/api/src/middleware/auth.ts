@@ -11,6 +11,9 @@ export interface AuthRequest extends Request {
     email?: string;
     role: string;
     language: string;
+    name: string;
+    email?: string;
+    address?: string;
   };
 }
 
@@ -57,6 +60,9 @@ export const authenticate = async (
       email: session.user.email || undefined,
       role: session.user.role,
       language: session.user.language,
+      name: session.user.name,
+      email: session.user.email || undefined,
+      address: session.user.address || undefined,
     };
 
     next();

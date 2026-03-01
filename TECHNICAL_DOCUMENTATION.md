@@ -1,838 +1,484 @@
-# SUVIDHA Kiosk - Technical Architecture & Evaluation Document
+# SUVIDHA Kiosk — Technical Documentation
 
-## 📋 Table of Contents
-1. [Citizen Journey: Assam Electricity Bill Payment](#1-citizen-journey-assam-electricity-bill-payment)
-2. [Unified Interface Architecture](#2-unified-interface-architecture)
-3. [Backend Services & Adapters](#3-backend-services--adapters)
-4. [Security Architecture](#4-security-architecture)
-5. [Admin Dashboard & Analytics](#5-admin-dashboard--analytics)
-6. [Mock vs Production Components](#6-mock-vs-production-components)
-7. [Evaluation Against Judging Criteria](#7-evaluation-against-judging-criteria)
+> **SUVIDHA** — Smart Unified Verified Integrated Digital Hub for Accessible Services  
+> A unified self-service kiosk platform for Electricity, Gas, Water, and Municipal civic services.
 
 ---
 
-## 1. Citizen Journey: Assam Electricity Bill Payment
+## Table of Contents
 
-### Step-by-Step Flow
+1. [Project Maturity & Development Status](#1-project-maturity--development-status)
+2. [System Architecture](#2-system-architecture)
+3. [Department-wise Features](#3-department-wise-features-in-kiosk-touch-interface)
+4. [UI/UX Suitability for Touch-Based Kiosk Interface](#4-uiux-suitability-for-touch-based-kiosk-interface)
+5. [Deployment & Practical Feasibility](#5-deployment--practical-feasibility)
+6. [Accessibility & Inclusion Details](#6-accessibility--inclusion-details)
+7. [Security Architecture & Design](#7-security-architecture--design)
+
+---
+
+## 1. Project Maturity & Development Status
+
+| Attribute | Details |
+|-----------|---------|
+| **Current Stage** | ✅ **Fully Functional System** |
+| **Frontend** | Next.js 15 (React 19), TypeScript, Tailwind CSS |
+| **Backend API** | Express.js, TypeScript, Prisma ORM |
+| **Database** | PostgreSQL (via Prisma) |
+| **Payment Gateway** | Dodo Payments (live integration with UPI, Card, Net Banking, Wallet) |
+| **Deployment** | Vercel (Frontend + API serverless functions) |
+| **Monorepo** | Turborepo with shared `@suvidha/database` package |
+
+### Tech Stack Overview
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                        SUVIDHA KIOSK - USER JOURNEY                        │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-Step 1: LANGUAGE SELECTION
-┌─────────────────┐
-│  🌐 Welcome     │
-│                 │
-│  [English]      │ ← Touch to select
-│  [हिंदी]         │
-│  [অসমীয়া]*      │   *Extensible for regional languages
-│                 │
-└─────────────────┘
-        ↓
-Step 2: AUTHENTICATION
-┌─────────────────┐
-│  📱 Login       │
-│                 │
-│  Phone: [____]  │ ← Enter 10-digit mobile
-│                 │
-│  [Send OTP]     │
-│                 │
-│  OTP: [____]    │ ← Enter 6-digit OTP
-│  [Verify]       │
-└─────────────────┘
-        ↓
-Step 3: SERVICE SELECTION
-┌─────────────────┐
-│  ⚡ Services    │
-│                 │
-│  [⚡Electricity]│ ← Citizen selects
-│  [🔥 Gas]       │
-│  [💧 Water]     │
-│  [🏛 Municipal] │
-└─────────────────┘
-        ↓
-Step 4: VIEW BILL
-┌─────────────────────────────┐
-│  📄 Your Electricity Bill   │
-│                             │
-│  Consumer: APDCL-ASM-12345  │
-│  Amount: ₹2,450             │
-│  Due Date: Feb 15, 2026     │
-│  Status: UNPAID             │
-│                             │
-│  [PAY NOW]                  │
-└─────────────────────────────┘
-        ↓
-Step 5: PAYMENT
-┌─────────────────────────────┐
-│  💳 Payment Method          │
-│                             │
-│  [📱 UPI]                   │
-│  [💳 Card]                  │
-│  [🏦 Net Banking]           │
-│  [💵 Cash at Counter]       │
-│                             │
-│  Amount: ₹2,450             │
-│  [CONFIRM PAYMENT]          │
-└─────────────────────────────┘
-        ↓
-Step 6: CONFIRMATION
-┌─────────────────────────────┐
-│  ✅ Payment Successful!     │
-│                             │
-│  Receipt: RCP1707234567890  │
-│  Transaction: TXN...ABC123  │
-│                             │
-│  [🖨 Print Receipt]         │
-│  [📥 Download PDF]          │
-│  [🏠 Back to Home]          │
-└─────────────────────────────┘
-```
-
-### Code Flow in the Application
-
-```typescript
-// 1. Language Selection (apps/web/src/app/page.tsx)
-<LanguageToggle /> // Switches between 'en' and 'hi'
-// i18n configuration in apps/web/src/lib/i18n.ts
-
-// 2. Authentication (apps/web/src/app/auth/login/page.tsx)
-POST /api/auth/send-otp { phone: "9876543210" }
-POST /api/auth/login { phone: "9876543210", otp: "123456" }
-// Returns JWT token stored in Zustand auth store
-
-// 3. Fetch Bills (apps/web/src/app/dashboard/page.tsx)
-GET /api/billing/bills?status=UNPAID
-// Returns bills grouped by service type
-
-// 4. View Bill Details (apps/web/src/app/bills/[id]/pay/page.tsx)
-GET /api/billing/bills/:id
-// Shows bill with connection details
-
-// 5. Process Payment (apps/web/src/app/bills/[id]/pay/page.tsx)
-POST /api/billing/pay {
-  billId: "...",
-  amount: 2450,
-  method: "UPI"
-}
-// Returns payment confirmation with receipt number
-
-// 6. Generate Receipt (apps/web/src/app/bills/[id]/receipt/page.tsx)
-GET /api/billing/receipt/:paymentId
-// Returns formatted receipt data for print/PDF
+┌─────────────────────────────────────────────────────┐
+│                   SUVIDHA Kiosk                     │
+├────────────────────┬────────────────────────────────┤
+│   Frontend (web)   │         Backend (api)          │
+│  Next.js 15 + TS   │     Express.js + Prisma        │
+│  Tailwind CSS      │     PostgreSQL (Neon)           │
+│  React 19          │     JWT Auth + OTP              │
+│  i18next           │     Dodo Payments               │
+│  Web Speech API    │     Zod Validation              │
+├────────────────────┴────────────────────────────────┤
+│              Shared: @suvidha/database              │
+│              Prisma Schema + Client                 │
+└─────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 2. Unified Interface Architecture
+## 2. System Architecture
 
-### How State-Specific Portals Are Abstracted
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    SUVIDHA UNIFIED LAYER                        │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
-│  │    KIOSK     │  │   MOBILE     │  │     WEB      │          │
-│  │   Frontend   │  │     App      │  │   Portal     │          │
-│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘          │
-│         │                 │                 │                   │
-│         └─────────────────┴─────────────────┘                   │
-│                           │                                     │
-│                    ┌──────┴──────┐                              │
-│                    │  SUVIDHA    │                              │
-│                    │    API      │                              │
-│                    │  Gateway    │                              │
-│                    └──────┬──────┘                              │
-│                           │                                     │
-├───────────────────────────┼─────────────────────────────────────┤
-│           STATE ADAPTER LAYER (Plugin Architecture)            │
-├───────────────────────────┼─────────────────────────────────────┤
-│                           │                                     │
-│    ┌──────────────────────┼──────────────────────────┐          │
-│    │                      │                          │          │
-│    ▼                      ▼                          ▼          │
-│ ┌──────────┐      ┌──────────────┐       ┌──────────────┐      │
-│ │  ASSAM   │      │    DELHI     │       │   GUJARAT    │      │
-│ │ APDCL    │      │  BSES/TPDDL  │       │    DGVCL     │      │
-│ │ Adapter  │      │   Adapter    │       │   Adapter    │      │
-│ └────┬─────┘      └──────┬───────┘       └──────┬───────┘      │
-│      │                   │                      │               │
-└──────┼───────────────────┼──────────────────────┼───────────────┘
-       ▼                   ▼                      ▼
-  ┌─────────┐        ┌─────────┐           ┌─────────┐
-  │ APDCL   │        │ BSES    │           │ DGVCL   │
-  │ Portal  │        │ Portal  │           │ Portal  │
-  └─────────┘        └─────────┘           └─────────┘
-```
-
-### Adapter Interface Design
-
-```typescript
-// packages/adapters/src/types.ts (Conceptual)
-interface StateUtilityAdapter {
-  state: string;
-  serviceType: 'ELECTRICITY' | 'GAS' | 'WATER' | 'MUNICIPAL';
-  
-  // Fetch consumer bills
-  fetchBills(consumerId: string): Promise<Bill[]>;
-  
-  // Verify consumer
-  verifyConsumer(consumerId: string): Promise<ConsumerInfo>;
-  
-  // Initiate payment
-  initiatePayment(billId: string, amount: number): Promise<PaymentSession>;
-  
-  // Confirm payment
-  confirmPayment(sessionId: string, txnId: string): Promise<PaymentResult>;
-  
-  // Fetch receipt
-  getReceipt(paymentId: string): Promise<Receipt>;
-}
-
-// packages/adapters/src/assam/apdcl.adapter.ts (Example)
-class APDCLAdapter implements StateUtilityAdapter {
-  state = 'ASSAM';
-  serviceType = 'ELECTRICITY';
-  private apiBase = 'https://apdcl.gov.in/api'; // State API
-  
-  async fetchBills(consumerId: string): Promise<Bill[]> {
-    // Transform APDCL-specific response to unified Bill format
-    const response = await this.callAPDCL('/consumer/bills', { consumerId });
-    return this.transformBills(response);
-  }
-  
-  private transformBills(apdclResponse: any): Bill[] {
-    // Normalize state-specific format to SUVIDHA unified format
-    return apdclResponse.bills.map(bill => ({
-      id: bill.bill_no,
-      amount: bill.total_amount,
-      dueDate: new Date(bill.due_dt),
-      periodFrom: new Date(bill.from_dt),
-      periodTo: new Date(bill.to_dt),
-      units: bill.units_consumed,
-      // ... standardized fields
-    }));
-  }
-}
-```
-
-### Key Design Principles
-
-| Principle | Implementation |
-|-----------|----------------|
-| **No Redirects** | API gateway fetches data from state portals server-side |
-| **Unified Data Model** | All state responses transformed to common schema |
-| **Session Isolation** | Each kiosk session is independent, no cross-user data |
-| **Offline Fallback** | Cached data for network failures with sync on reconnect |
-| **State Config** | State-specific settings loaded from database |
-
----
-
-## 3. Backend Services & Adapters
-
-### Service Architecture
+### High-Level Architecture Diagram
 
 ```
-┌────────────────────────────────────────────────────────────────────────┐
-│                         SUVIDHA API (Express.js)                       │
-├────────────────────────────────────────────────────────────────────────┤
-│                                                                        │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  │
-│  │    Auth     │  │   Billing   │  │  Grievance  │  │    Admin    │  │
-│  │   Module    │  │   Module    │  │   Module    │  │   Module    │  │
-│  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘  │
-│         │                │                │                │          │
-│         └────────────────┴────────────────┴────────────────┘          │
-│                                   │                                    │
-│                          ┌────────┴────────┐                          │
-│                          │  Adapter Layer  │                          │
-│                          └────────┬────────┘                          │
-│                                   │                                    │
-│  ┌────────────────────────────────┼────────────────────────────────┐  │
-│  │                                │                                │  │
-│  ▼                                ▼                                ▼  │
-│ ┌──────────────┐     ┌──────────────────┐     ┌──────────────────┐  │
-│ │ State Utility│     │ Payment Gateway  │     │  SMS/OTP Service │  │
-│ │   Adapters   │     │    (Razorpay)    │     │    (Twilio)      │  │
-│ └──────────────┘     └──────────────────┘     └──────────────────┘  │
-│                                                                        │
-└────────────────────────────────────────────────────────────────────────┘
+                    ┌───────────────┐
+                    │   Citizen     │
+                    │  (Kiosk/Web)  │
+                    └───────┬───────┘
+                            │ HTTPS
+                    ┌───────▼───────┐
+                    │  Next.js App  │
+                    │  (SSR + CSR)  │
+                    │  Vercel Edge  │
+                    └───────┬───────┘
+                            │ REST API
+                    ┌───────▼───────┐
+                    │  Express API  │
+                    │  (Serverless) │
+                    ├───────────────┤
+                    │  Middleware   │
+                    │  • Auth (JWT) │
+                    │  • Rate Limit │
+                    │  • Sanitize   │
+                    │  • CORS       │
+                    │  • Helmet     │
+                    └───────┬───────┘
+                            │
+              ┌─────────────┼─────────────┐
+              │             │             │
+      ┌───────▼──┐   ┌─────▼────┐  ┌─────▼─────┐
+      │PostgreSQL│   │  Dodo    │  │ Cloudinary│
+      │ (Neon)   │   │ Payments │  │ (Uploads) │
+      └──────────┘   └──────────┘  └───────────┘
 ```
 
-### Bill Fetch Process (Triggered Services)
-
-```typescript
-// apps/api/src/modules/billing/routes.ts
-router.get('/bills', async (req, res) => {
-  // 1. Authenticate user
-  const user = req.user; // From JWT middleware
-  
-  // 2. Fetch user's connections from database
-  const connections = await prisma.serviceConnection.findMany({
-    where: { userId: user.id, status: 'ACTIVE' }
-  });
-  
-  // 3. For each connection, fetch bills
-  // In production: Call state-specific adapter
-  // Currently: Fetch from local database (mocked)
-  const bills = await prisma.bill.findMany({
-    where: { userId: user.id },
-    include: { connection: true }
-  });
-  
-  // 4. Return unified response
-  return res.json({ success: true, data: bills });
-});
-```
-
-### Payment Process Flow
+### Monorepo Structure
 
 ```
-┌──────────┐     ┌──────────┐     ┌──────────────┐     ┌───────────────┐
-│  Kiosk   │────▶│ SUVIDHA  │────▶│   Payment    │────▶│ State Utility │
-│ Frontend │     │   API    │     │   Gateway    │     │    Portal     │
-└──────────┘     └──────────┘     └──────────────┘     └───────────────┘
-     │                │                  │                     │
-     │ 1. Pay Request │                  │                     │
-     │───────────────▶│                  │                     │
-     │                │ 2. Create Order  │                     │
-     │                │─────────────────▶│                     │
-     │                │                  │                     │
-     │                │ 3. Order ID      │                     │
-     │                │◀─────────────────│                     │
-     │ 4. Payment UI  │                  │                     │
-     │◀───────────────│                  │                     │
-     │                │                  │                     │
-     │ 5. User Pays   │                  │                     │
-     │───────────────▶│                  │                     │
-     │                │ 6. Verify        │                     │
-     │                │─────────────────▶│                     │
-     │                │                  │                     │
-     │                │ 7. Confirmed     │ 8. Update Bill      │
-     │                │◀─────────────────│────────────────────▶│
-     │                │                  │                     │
-     │ 9. Receipt     │                  │                     │
-     │◀───────────────│                  │                     │
-```
-
-### Scalability Design
-
-```typescript
-// Adapter Factory Pattern for Multi-State Support
-// packages/adapters/src/factory.ts
-
-class AdapterFactory {
-  private adapters: Map<string, StateUtilityAdapter> = new Map();
-  
-  registerAdapter(key: string, adapter: StateUtilityAdapter) {
-    this.adapters.set(key, adapter);
-  }
-  
-  getAdapter(state: string, serviceType: string): StateUtilityAdapter {
-    const key = `${state}_${serviceType}`;
-    const adapter = this.adapters.get(key);
-    if (!adapter) {
-      throw new Error(`No adapter for ${state} ${serviceType}`);
-    }
-    return adapter;
-  }
-}
-
-// Registration
-const factory = new AdapterFactory();
-factory.registerAdapter('ASSAM_ELECTRICITY', new APDCLAdapter());
-factory.registerAdapter('DELHI_ELECTRICITY', new BSESAdapter());
-factory.registerAdapter('ASSAM_WATER', new AssamWaterAdapter());
-// ... dynamically add more states
-```
-
----
-
-## 4. Security Architecture
-
-### Authentication Security
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                    AUTHENTICATION FLOW                              │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│  1. OTP REQUEST                                                     │
-│  ┌──────────┐     ┌──────────┐     ┌──────────┐                   │
-│  │  Kiosk   │────▶│   API    │────▶│   SMS    │                   │
-│  │          │     │ +Rate    │     │ Gateway  │                   │
-│  │          │     │ Limiter  │     │ (Twilio) │                   │
-│  └──────────┘     └──────────┘     └──────────┘                   │
-│       │                │                                           │
-│       │          Rate Limit:                                       │
-│       │          - 3 OTP/phone/hour                                │
-│       │          - 100 OTP/IP/hour                                 │
-│                                                                     │
-│  2. OTP VERIFICATION                                                │
-│  ┌──────────┐     ┌──────────┐     ┌──────────┐                   │
-│  │  Kiosk   │────▶│   API    │────▶│   JWT    │                   │
-│  │          │     │ Verify   │     │ Generate │                   │
-│  │          │     │ OTP Hash │     │          │                   │
-│  └──────────┘     └──────────┘     └──────────┘                   │
-│                         │                                          │
-│                   OTP Security:                                    │
-│                   - 5 min expiry                                   │
-│                   - 3 attempts max                                 │
-│                   - Hashed storage                                 │
-│                                                                     │
-│  3. SESSION MANAGEMENT                                              │
-│  ┌──────────────────────────────────────────────────────────┐     │
-│  │ JWT Token (15 min) + Refresh Token (7 days)              │     │
-│  │ - Stored in secure HTTP-only cookies (production)        │     │
-│  │ - Kiosk ID tracked in token                              │     │
-│  │ - Auto-logout on inactivity (5 min for kiosk)            │     │
-│  └──────────────────────────────────────────────────────────┘     │
-│                                                                     │
-└─────────────────────────────────────────────────────────────────────┘
-```
-
-### Payment Security
-
-```typescript
-// Security measures in payment flow
-const paymentSecurity = {
-  // 1. Token validation
-  authentication: 'JWT with 15-min expiry',
-  
-  // 2. Transaction verification
-  idempotency: 'Unique transaction ID per request',
-  doublePayment: 'Bill status check before payment',
-  
-  // 3. Amount verification
-  amountCheck: 'Server-side amount validation against bill',
-  
-  // 4. Audit trail
-  logging: 'All transactions logged with kiosk ID',
-  
-  // 5. Sensitive data
-  cardData: 'Never touches SUVIDHA servers (PCI compliance)',
-  
-  // 6. Network security
-  transport: 'HTTPS only, TLS 1.3',
-  cors: 'Whitelist kiosk domains only'
-};
-```
-
-### Kiosk Session Timeout
-
-```typescript
-// apps/web/src/components/kiosk/session-manager.tsx (Conceptual)
-const KIOSK_TIMEOUT = 5 * 60 * 1000; // 5 minutes
-
-function SessionManager({ children }) {
-  const { logout } = useAuthStore();
-  const [lastActivity, setLastActivity] = useState(Date.now());
-  
-  useEffect(() => {
-    const events = ['mousedown', 'keydown', 'touchstart', 'scroll'];
-    
-    const resetTimer = () => setLastActivity(Date.now());
-    events.forEach(e => window.addEventListener(e, resetTimer));
-    
-    const interval = setInterval(() => {
-      if (Date.now() - lastActivity > KIOSK_TIMEOUT) {
-        // Show warning modal
-        showTimeoutWarning();
-        // Auto-logout after 30 more seconds
-        setTimeout(logout, 30000);
-      }
-    }, 1000);
-    
-    return () => {
-      events.forEach(e => window.removeEventListener(e, resetTimer));
-      clearInterval(interval);
-    };
-  }, [lastActivity]);
-  
-  return children;
-}
-```
-
-### Security Headers (API)
-
-```typescript
-// apps/api/src/index.ts
-import helmet from 'helmet';
-
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", "data:", "https:"],
-    },
-  },
-  hsts: { maxAge: 31536000, includeSubDomains: true },
-  noSniff: true,
-  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
-}));
-
-// Rate limiting
-import rateLimit from 'express-rate-limit';
-
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // 100 requests per window
-  message: { error: 'Too many requests' }
-});
-
-app.use('/api/', limiter);
-```
-
----
-
-## 5. Admin Dashboard & Analytics
-
-### Transaction Tracking
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                    ADMIN DASHBOARD                                  │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│  ┌─────────────────────────────────────────────────────────────┐   │
-│  │ LIVE ACTIVITY FEED (Real-time from all kiosks)              │   │
-│  ├─────────────────────────────────────────────────────────────┤   │
-│  │ 💳 Bill payment of ₹2,450 - Rahul S. - KIOSK-001 - Just now │   │
-│  │ 📝 New complaint submitted - Priya M. - KIOSK-002 - 5m ago  │   │
-│  │ ⚡ New connection application - Amit K. - KIOSK-001 - 10m   │   │
-│  │ 🔢 Meter reading submitted - Sunita D. - KIOSK-003 - 15m    │   │
-│  └─────────────────────────────────────────────────────────────┘   │
-│                                                                     │
-│  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌────────────┐ │
-│  │Today Revenue │ │ Active Kiosks│ │  Total Users │ │Open Issues │ │
-│  │  ₹2,34,500   │ │    3/4       │ │    1,234     │ │     45     │ │
-│  │  156 txns    │ │  1 offline   │ │  +24 today   │ │ 12 resolved│ │
-│  └──────────────┘ └──────────────┘ └──────────────┘ └────────────┘ │
-│                                                                     │
-│  SERVICE BREAKDOWN                                                  │
-│  ┌─────────────────────────────────────────────────────────────┐   │
-│  │ ⚡ Electricity: 67 txns | ₹1,56,000                         │   │
-│  │ 🔥 Gas:         23 txns | ₹34,500                           │   │
-│  │ 💧 Water:       45 txns | ₹28,000                           │   │
-│  │ 🏛 Municipal:   21 txns | ₹16,000                           │   │
-│  └─────────────────────────────────────────────────────────────┘   │
-│                                                                     │
-└─────────────────────────────────────────────────────────────────────┘
-```
-
-### Analytics Generated
-
-```typescript
-// apps/api/src/modules/admin/routes.ts
-
-// 1. Dashboard Stats
-GET /api/admin/dashboard
-{
-  totalUsers: 1234,
-  activeConnections: 4567,
-  todayPayments: 156,
-  todayRevenue: 234500,
-  openGrievances: 45,
-  resolvedToday: 12,
-  activeKiosks: 3
-}
-
-// 2. Live Activity Feed
-GET /api/admin/activities?limit=10
-[
-  { type: 'PAYMENT', user: 'Rahul S.', kioskId: 'KIOSK-001', ... },
-  { type: 'GRIEVANCE', user: 'Priya M.', kioskId: 'KIOSK-002', ... },
-]
-
-// 3. Service Reports
-GET /api/admin/reports?type=daily
-{
-  period: 'Today',
-  revenue: 234500,
-  transactions: 156,
-  serviceBreakdown: {
-    ELECTRICITY: { count: 67, revenue: 156000 },
-    GAS: { count: 23, revenue: 34500 },
-    // ...
-  }
-}
-
-// 4. Kiosk Status
-GET /api/admin/kiosks
-[
-  { id: 'KIOSK-001', status: 'ONLINE', todayTxns: 45, uptime: 99.8 },
-  { id: 'KIOSK-002', status: 'OFFLINE', lastPing: '1h ago' },
-]
-```
-
-### Audit Trail (Database Tables)
-
-```sql
--- Every action is logged
-TABLE payment {
-  id, userId, billId, amount, method, status,
-  transactionId, receiptNo, kioskId, createdAt
-}
-
-TABLE kiosk_log {
-  id, kioskId, action, userId, details, createdAt
-}
-
-TABLE grievance_timeline {
-  id, grievanceId, action, description, actionBy, createdAt
-}
-```
-
----
-
-## 6. Mock vs Production Components
-
-### Current Mocked Components
-
-| Component | Mock Implementation | Production Replacement |
-|-----------|---------------------|------------------------|
-| **OTP Service** | Random 6-digit, logged to console | Twilio/AWS SNS/MSG91 |
-| **State Utility APIs** | Local Prisma database | State-specific adapters (APDCL, BSES, etc.) |
-| **Payment Gateway** | Instant success simulation | Razorpay/PayU/BharatPay |
-| **PDF Generation** | Browser print dialog | PDF generation via Puppeteer/jsPDF |
-| **Aadhaar Verification** | Hashed mock ID | UIDAI eKYC API |
-| **Kiosk Hardware** | Web-based simulation | Physical kiosk with thermal printer |
-
-### Code Examples: Mock vs Production
-
-```typescript
-// apps/api/src/modules/auth/routes.ts
-
-// MOCK IMPLEMENTATION (Current)
-const sendOTP = async (phone: string) => {
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  console.log(`[MOCK SMS] OTP for ${phone}: ${otp}`);
-  otpStore.set(phone, { otp, expiresAt: new Date(Date.now() + 5 * 60000) });
-};
-
-// PRODUCTION IMPLEMENTATION
-const sendOTP = async (phone: string) => {
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  
-  // Store hashed OTP
-  const hashedOtp = await bcrypt.hash(otp, 10);
-  await redis.set(`otp:${phone}`, hashedOtp, 'EX', 300);
-  
-  // Send via Twilio
-  await twilio.messages.create({
-    body: `Your SUVIDHA OTP is ${otp}. Valid for 5 minutes.`,
-    to: phone,
-    from: process.env.TWILIO_PHONE
-  });
-};
-```
-
-```typescript
-// PAYMENT: Mock vs Production
-
-// MOCK (Current)
-router.post('/pay', async (req, res) => {
-  // Instantly successful
-  const payment = await prisma.payment.create({
-    data: { ...req.body, status: 'SUCCESS' }
-  });
-  return res.json({ success: true, data: payment });
-});
-
-// PRODUCTION
-router.post('/pay', async (req, res) => {
-  // 1. Create Razorpay order
-  const order = await razorpay.orders.create({
-    amount: req.body.amount * 100,
-    currency: 'INR',
-    receipt: `bill_${req.body.billId}`
-  });
-  
-  // 2. Return order ID for frontend to process
-  return res.json({ orderId: order.id });
-});
-
-router.post('/pay/verify', async (req, res) => {
-  // Verify Razorpay signature
-  const isValid = razorpay.validateWebhookSignature(...);
-  if (isValid) {
-    // Update bill status
-    await prisma.payment.update({ status: 'SUCCESS' });
-  }
-});
-```
-
-### Integration Roadmap
-
-```
-Phase 1 (Hackathon Demo)
-├── Mock OTP (console)
-├── Mock payments (instant success)
-├── Local database bills
-└── Browser print
-
-Phase 2 (Pilot Deployment)
-├── Twilio SMS integration
-├── Razorpay sandbox
-├── 1 state adapter (Assam APDCL)
-└── PDF generation
-
-Phase 3 (Production)
-├── Multiple state adapters
-├── Production payment gateway
-├── UIDAI Aadhaar integration
-├── Hardware kiosk integration
-└── Thermal printer support
-```
-
----
-
-## 7. Evaluation Against Judging Criteria
-
-### 📊 Detailed Assessment
-
-| Criteria | Score | Assessment |
-|----------|-------|------------|
-| **Functionality** | 8/10 | Core features complete, some advanced features mocked |
-| **Usability** | 9/10 | Excellent kiosk-friendly UI, large touch targets, bilingual |
-| **Innovation** | 7/10 | Unified interface is innovative, but pattern is established |
-| **Security** | 7/10 | Good foundation, needs production hardening |
-| **Documentation** | 7/10 | Code is well-structured, needs more inline docs |
-
----
-
-### ✅ STRENGTHS
-
-#### 1. **Comprehensive Feature Set**
-- All 4 service types (Electricity, Gas, Water, Municipal)
-- Complete citizen journey (login → pay → receipt)
-- Admin dashboard with live activity tracking
-- Grievance management with timeline
-- Bilingual support (English/Hindi)
-
-#### 2. **Excellent Kiosk UX**
-- Large touch targets (60px minimum)
-- Clear visual hierarchy
-- High contrast colors
-- Simple navigation (max 3 taps to any function)
-- Print-friendly receipts
-
-#### 3. **Scalable Architecture**
-- Clean separation of concerns (monorepo with packages)
-- Adapter pattern for multi-state support
-- Shared types across frontend/backend
-- Database-agnostic ORM (Prisma)
-
-#### 4. **Real Admin-Kiosk Connection**
-- Live activity feed shows citizen actions
-- Transaction tracking by kiosk ID
-- Real-time stats and reports
-- Alert management for emergencies
-
----
-
-### ⚠️ GAPS
-
-#### 1. **Security Gaps**
-- [ ] JWT stored in localStorage (should be HTTP-only cookies)
-- [ ] No CAPTCHA on OTP requests
-- [ ] Missing input sanitization in some places
-- [ ] No session invalidation on password change
-
-#### 2. **Missing Features**
-- [ ] Aadhaar-based authentication
-- [ ] Document upload for new connections
-- [ ] SMS notifications for payment confirmations
-- [ ] Offline mode support
-- [ ] Accessibility (screen reader support)
-
-#### 3. **Production Readiness**
-- [ ] No health monitoring (APM)
-- [ ] No centralized logging
-- [ ] No database connection pooling
-- [ ] Missing database indexes for performance
-- [ ] No load testing performed
-
----
-
-### 🔧 SPECIFIC IMPROVEMENTS NEEDED
-
-#### For Smart City Deployment:
-
-```
-1. SECURITY HARDENING
-   ├── Implement HTTP-only secure cookies
-   ├── Add reCAPTCHA v3 on login
-   ├── Implement CSRF protection
-   ├── Add request signing for API calls
-   └── Implement session fingerprinting
-
-2. REAL INTEGRATIONS
-   ├── State utility API adapters
-   ├── Payment gateway (Razorpay/PayU)
-   ├── SMS service (Twilio/MSG91)
-   ├── Aadhaar eKYC API
-   └── Thermal printer SDK
-
-3. INFRASTRUCTURE
-   ├── Redis for session storage
-   ├── CDN for static assets
-   ├── Database read replicas
-   ├── API rate limiting per user
-   └── Container orchestration (K8s)
-
-4. MONITORING
-   ├── Application Performance Monitoring
-   ├── Error tracking (Sentry)
-   ├── Uptime monitoring
-   ├── Real-time alerting
-   └── Kiosk health checks
-
-5. COMPLIANCE
-   ├── DPDP Act compliance
-   ├── Accessibility (WCAG 2.1)
-   ├── Audit logging
-   ├── Data retention policies
-   └── Consent management
-```
-
----
-
-### 📈 Production Readiness Score
-
-```
-Feature Completeness:     ████████░░ 80%
-Security Hardening:       █████░░░░░ 50%
-Scalability:              ███████░░░ 70%
-Integration Readiness:    ████░░░░░░ 40%
-Documentation:            ██████░░░░ 60%
-─────────────────────────────────────
-OVERALL:                  ██████░░░░ 60%
-```
-
-**Verdict**: Strong hackathon demo with excellent UX. Needs 3-4 months of additional development for production Smart City deployment, primarily focused on real integrations and security hardening.
-
----
-
-## Appendix: File Structure
-
-```
-C:\Users\aruna\.od\Shuvidha\
+suvidha-mohornav/
 ├── apps/
-│   ├── web/                 # Next.js Kiosk Frontend
-│   │   ├── src/app/         # Pages (20 routes)
-│   │   ├── src/components/  # UI Components
-│   │   └── src/lib/         # Stores, utils, i18n
-│   └── api/                 # Express.js Backend
-│       ├── src/modules/     # Auth, Billing, Grievance, Admin
-│       └── src/middleware/  # Auth, Error handling
+│   ├── web/                    # Next.js 15 Frontend
+│   │   ├── src/app/            # App Router pages
+│   │   ├── src/components/     # Reusable UI components
+│   │   ├── src/lib/            # Hooks, context, i18n, utils
+│   │   └── public/             # Static assets
+│   └── api/                    # Express.js Backend
+│       ├── src/modules/        # Feature modules (14 total)
+│       ├── src/middleware/      # Auth, error, logger, sanitize
+│       └── src/index.ts        # Entry point
 ├── packages/
-│   ├── database/            # Prisma ORM + Schema
-│   └── types/               # Shared TypeScript types
-└── package.json             # Turborepo monorepo config
+│   └── database/               # Shared Prisma schema + client
+│       └── prisma/schema.prisma
+└── turbo.json                  # Turborepo configuration
 ```
+
+---
+
+## 3. Department-wise Features in Kiosk Touch Interface
+
+### ⚡ Electricity Department
+
+| Feature | Description | API Endpoint |
+|---------|-------------|--------------|
+| **Meter Reading Submission** | Citizens submit meter readings with optional photo upload for verification | `POST /api/electricity/readings` |
+| **Bill Calculation (Dry Run)** | Estimate bill before actual submission using slab-based tariff logic | `POST /api/electricity/calculate-bill` |
+| **Tariff Viewing** | View active tariff slabs grouped by load type (Domestic/Commercial/Industrial) | `GET /api/electricity/tariffs` |
+| **Consumption History** | 6-month consumption and billing history per connection | `GET /api/electricity/consumption/:id` |
+| **Bill Payment** | Online payment via Dodo Payments (UPI, Card, Net Banking) | `POST /api/payments/create-order` |
+| **New Connection Application** | Apply for new electricity connection with document upload | `POST /api/service-requests` |
+| **Grievance Filing** | File complaints about power outage, meter issues, voltage fluctuation | `POST /api/grievances` |
+
+**Tariff Engine**: Slab-based calculation per `TariffService` — supports multiple load types (Domestic, Commercial, Industrial), per-unit rate slabs, fixed charges, and surcharges.
+
+---
+
+### 🔥 Gas Department
+
+| Feature | Description | API Endpoint |
+|---------|-------------|--------------|
+| **Cylinder Refill Booking** | Book gas cylinder with anti-double-booking check and subsidy calculation | `POST /api/gas/book` |
+| **Booking History** | View all past cylinder bookings with delivery status tracking | `GET /api/gas/bookings` |
+| **Piped Gas Meter Reading** | Submit piped gas meter readings for AGCL tariff-based billing | `POST /api/gas/readings` |
+| **Bill Estimation** | Estimate bill based on AGCL tariff (₹17.42/SCM base + 14.5% VAT) | `POST /api/gas/calculate-bill` |
+| **Gas Connections** | View and manage gas connections | `GET /api/gas/connections` |
+| **Grievance Filing** | Report gas leakage, cylinder delivery issues, pressure problems | `POST /api/grievances` |
+
+**Tariff Details**: Based on Assam Gas Company Limited (AGCL) tariffs — Base rate ₹17.42/SCM (Apr 2025), marketing margin ₹0.20/SCM, 14.5% VAT, minimum billing for 5 SCM.
+
+---
+
+### 💧 Water Department
+
+| Feature | Description | API Endpoint |
+|---------|-------------|--------------|
+| **Meter Reading Submission** | Submit water meter readings with photo upload and auto-bill generation | `POST /api/water/readings` |
+| **Bill Calculation** | Estimate bill based on load type (Domestic/Commercial/Industrial) | `POST /api/water/calculate-bill` |
+| **Consumption History** | 6-month water consumption and billing history | `GET /api/water/consumption/:id` |
+| **Water Connections** | View and manage water connections | `GET /api/water/connections` |
+| **Bill Payment** | Online payment via integrated payment gateway | `POST /api/payments/create-order` |
+| **Grievance Filing** | Report water quality issues, pipe leakage, no supply | `POST /api/grievances` |
+
+**Tariff Engine**: `WaterTariffService` — load-type-based tariff calculation supporting domestic, commercial, and industrial rates.
+
+---
+
+### 🏛️ Municipal Corporation
+
+| Feature | Description | API Endpoint |
+|---------|-------------|--------------|
+| **Property Tax Viewing** | View registered properties and tax records per financial year | `GET /api/municipal/properties` |
+| **Property Tax Payment** | Pay tax with receipt generation and partial payment support | `POST /api/municipal/tax/pay` |
+| **Civic Complaints** | File complaints: streetlight, road repair, drainage, sanitation, garbage | `POST /api/municipal/complaints` |
+| **Complaint Tracking** | Track status with filters by category and status | `GET /api/municipal/complaints` |
+| **Waste Collection Schedule** | View waste collection schedule by pincode/ward | `GET /api/municipal/waste-schedule` |
+| **Missed Collection Reporting** | Report missed waste collection (dry/wet/both) | `POST /api/municipal/waste/report` |
+
+**Complaint Categories**: STREETLIGHT, ROAD_REPAIR, DRAINAGE, SANITATION, WATER_SUPPLY, GARBAGE, OTHER — with priority levels (LOW, MEDIUM, HIGH, URGENT).
+
+---
+
+### 🛡️ SIGM (Single-Interaction Guarantee Mode) — *Novel Feature*
+
+| Feature | Description | API Endpoint |
+|---------|-------------|--------------|
+| **Pre-submission Check** | Verify all prerequisites before submitting any request | `POST /api/sigm/check` |
+| **Citizen Acknowledgment** | Record citizen's informed consent of guarantee status | `POST /api/sigm/acknowledge` |
+| **Lock Prevention** | Check if a similar request is already locked/pending | `POST /api/sigm/check-lock` |
+| **Submission Recording** | Record actual submission with audit trail | `POST /api/sigm/record-submission` |
+| **History** | Paginated history of all SIGM checks for a user | `GET /api/sigm/history` |
+| **Admin Analytics** | Dashboard analytics: guarantee rates, service breakdown, trends | `GET /api/sigm/analytics` |
+
+**Purpose**: SIGM ensures citizens don't waste multiple kiosk visits. Before any submission, the system checks if all prerequisites are met and guarantees the outcome — saving repeat visits and building trust.
+
+---
+
+### 🔗 Cross-Department Features
+
+| Feature | Description |
+|---------|-------------|
+| **Unified Grievance System** | File grievances for any department with timeline tracking and photo evidence |
+| **Centralized Billing** | View and pay bills for all services from a single dashboard |
+| **Smart Assistant** | NLP-powered intent parser that routes users to the correct service page via 1–2 words |
+| **Voice Navigation** | Hands-free navigation using Web Speech API (Hindi + English + Assamese) |
+| **Notification System** | Bilingual (Hindi + English) push notifications for payment confirmations, grievance updates |
+| **Admin Dashboard** | Unified admin panel for service requests, meter reading verification, analytics |
+
+---
+
+## 4. UI/UX Suitability for Touch-Based Kiosk Interface
+
+### ✅ Yes — the UI is specifically designed for touch-based kiosk usage.
+
+### Design Considerations for Kiosk & Touch Interaction
+
+| Constraint | How SUVIDHA Addresses It |
+|-----------|--------------------------|
+| **Large Touch Targets** | All buttons follow `min-h-16 min-w-16` (64×64px) — exceeds the 48px WCAG minimum. Kiosk buttons (`kiosk-button` class) use `px-8 py-5` padding and `text-lg` minimum font. |
+| **No Keyboard Required** | Quick phrase cards for common actions (e.g., "Pay my electricity bill"), plus voice input via mic button — no typing needed. |
+| **Font Scaling** | CSS variable `--accessibility-font-scale` applied on `<body>` with range: Normal (1.0×), Large (1.3×), Extra Large (1.6×), Senior (2.0×). |
+| **High Contrast Mode** | Dedicated `.high-contrast` CSS class that sets foreground to pure black, background to white, and adds 3px borders to all cards and buttons. |
+| **Visible Focus Rings** | All interactive elements show 4px focus rings (`focus:ring-4`) — `focus:outline-none` was deliberately removed so keyboard/switch users can navigate. |
+| **Bilingual UI** | Full i18n with `i18next` — English, Hindi, and Assamese. All labels, buttons, headings, and error messages are translated. |
+| **Kiosk Mode Detection** | `isKiosK` context variable triggers full-width layouts, larger fonts, and simplified navigation for kiosk deployments. |
+| **Timeout/Session Management** | JWT tokens expire in 15 minutes with auto-refresh — ensures kiosk sessions don't persist for the next user. |
+| **Error Recovery** | All forms have clear error states, try-again buttons, and fallback navigation. The Smart Assistant has a "Choose from Menu" fallback when confidence is low. |
+| **No Hover-Only Interactions** | All hover effects have corresponding `active:` states for touch. No functionality depends on hover alone. |
+
+### Touch-Specific CSS Utilities
+
+```css
+.kiosk-button {
+  min-h-16 min-w-16 px-8 py-5 text-lg font-semibold
+  rounded-2xl transition-all duration-200 ease-out
+  active:scale-95  /* Touch feedback */
+  focus:ring-4     /* Keyboard/switch accessibility */
+  cursor-pointer;
+}
+
+.kiosk-card {
+  rounded-2xl p-6 lg:p-8  /* Generous padding for touch */
+  border-2                  /* Clear boundaries */
+  shadow-md                 /* Depth perception */
+}
+```
+
+---
+
+## 5. Deployment & Practical Feasibility
+
+### Target Deployment Environment
+
+| Attribute | Value |
+|-----------|-------|
+| **Deployment Model** | **Cloud (Vercel)** with capability for Hybrid |
+| **Frontend Hosting** | Vercel Edge Network (global CDN, SSR) |
+| **API Hosting** | Vercel Serverless Functions (auto-scaling) |
+| **Database** | Neon PostgreSQL (serverless Postgres, auto-scaling) |
+| **File Storage** | Cloudinary (meter reading photos, complaint evidence) |
+| **Payment Processing** | Dodo Payments (PCI-DSS compliant gateway) |
+
+### Infrastructure Requirements
+
+| Component | Specification |
+|-----------|---------------|
+| **Kiosk Hardware** | Any device with a modern browser (Chrome 90+, Edge 90+). Recommended: 15" touchscreen, 4GB RAM |
+| **Network** | Standard broadband (5 Mbps+). The app is lightweight — API calls are small JSON payloads (<10KB avg) |
+| **Server** | Zero server management — Vercel serverless auto-scales from 0 to thousands of concurrent users |
+| **Database** | Neon PostgreSQL free tier supports up to 10,000 active hours/month; paid plans for production |
+| **SSL** | Auto-provisioned by Vercel (Let's Encrypt) |
+
+### Internet Dependency: **Medium**
+
+| Scenario | Behavior |
+|----------|----------|
+| **Full Connectivity** | All features work — payments, real-time bill calculation, data sync |
+| **Intermittent** | Client-side form state persists; submissions queue and retry on reconnect |
+| **Offline** | Static pages load from Next.js cache; Smart Assistant NLP runs fully client-side (`intent-parser.ts` has no server dependency) |
+
+### Offline Mode Support: **Partial**
+
+| Works Offline | Requires Internet |
+|--------------|-------------------|
+| Page navigation & routing | Bill payments (Dodo API) |
+| Smart Assistant NLP | Meter reading submission |
+| Accessibility settings | Grievance filing |
+| Language switching | Authentication (OTP) |
+| Voice recognition (browser-native) | Database queries |
+
+> **Future Enhancement**: Service Worker caching + IndexedDB offline queue can enable full offline → sync functionality.
+
+---
+
+## 6. Accessibility & Inclusion Details
+
+### Support for Visually Impaired Users ✅
+
+| Feature | Implementation |
+|---------|---------------|
+| **Screen Reader Support** | All interactive elements have `aria-label` attributes. Toast notifications use `aria-live="polite"`. Service cards have `role` and `aria-describedby`. |
+| **Skip Navigation** | `<a href="#main-content">Skip to main content</a>` link in root layout |
+| **Semantic HTML** | Proper `<nav>`, `<main>`, `<header>`, `<footer>`, `<h1>` hierarchy on every page |
+| **Focus Management** | Visible 4px focus rings on all buttons. Tab order follows visual layout. |
+| **Text-to-Speech** | `useTTS` hook announces intent results, page transitions, and form confirmations aloud |
+| **High Contrast Mode** | One-tap high contrast toggle — black text, white background, 3px borders |
+
+### Support for Senior Citizens ✅
+
+| Feature | Implementation |
+|---------|---------------|
+| **Senior Mode** | One-tap "Senior Mode" button that simultaneously enables: 2× font size, high contrast, and text-to-speech |
+| **Font Scaling** | Range from 1.0× to 2.0× via CSS variable `--accessibility-font-scale` |
+| **Large Touch Targets** | All buttons minimum 64×64px with generous padding |
+| **Simple Navigation** | Quick phrase cards eliminate need for typing; voice input for hands-free use |
+| **Clear Visual Feedback** | `active:scale-95` on all buttons provides tactile feedback for touch |
+
+### Regional Language Support ✅
+
+| Language | Code | Coverage |
+|----------|------|----------|
+| **English** | `en` | Full UI + notifications + assistant |
+| **Hindi** | `hi` | Full UI + notifications + assistant |
+| **Assamese** | `as` | UI labels + voice input |
+
+- Language selector visible in header on every page
+- `<html lang>` attribute dynamically updated via `DynamicHtmlLang` component
+- All notification messages (payments, grievances) sent in both English and Hindi
+- Voice recognition supports `en-IN`, `hi-IN`, `as-IN` locales
+
+### Voice-Based Navigation ✅
+
+| Feature | Implementation |
+|---------|---------------|
+| **Voice Input** | `useVoiceRecognition` hook wraps Web Speech API — supports English, Hindi, Assamese |
+| **NLP Intent Parsing** | `intent-parser.ts` — 400+ lines of keyword matching for 50+ phrases across 4 departments |
+| **Confidence Scoring** | Multi-factor confidence: keyword relevance, partial matches, token coverage |
+| **TTS Output** | `useTTS` hook reads out parsed intents and confirmations aloud |
+| **Visual Feedback** | Pulsing "Listening..." indicator with live transcript, mic button with on/off state |
+| **Browser-Native** | Zero external APIs — uses built-in `SpeechRecognition` and `speechSynthesis` |
+
+### UI Compliance Standards
+
+#### WCAG AA Compliance ✅
+
+| Criterion | Status | Details |
+|-----------|--------|---------|
+| **1.1.1 Non-text Content** | ✅ | All icons have `aria-label` or `aria-hidden="true"` with visible text |
+| **1.3.1 Info and Relationships** | ✅ | Semantic HTML5 elements (`<nav>`, `<main>`, `<header>`) |
+| **1.4.3 Contrast (Minimum)** | ✅ | Muted text `--muted-foreground` set to `#4a5f73` (4.5:1 ratio on white) |
+| **1.4.4 Resize Text** | ✅ | Font scale up to 200% without layout breakage |
+| **2.1.1 Keyboard** | ✅ | All functionality accessible via keyboard; focus rings visible |
+| **2.4.1 Bypass Blocks** | ✅ | "Skip to main content" link in root layout |
+| **2.4.2 Page Titled** | ✅ | Every page has descriptive `<title>` |
+| **3.1.1 Language of Page** | ✅ | `<html lang>` dynamically updated via `DynamicHtmlLang` component |
+| **4.1.2 Name, Role, Value** | ✅ | ARIA attributes on all custom controls |
+
+#### Government UI Guidelines ✅
+
+| Guideline | Implementation |
+|-----------|---------------|
+| **GIGW (Guidelines for Indian Government Websites)** | Bilingual content, accessibility toolbar, skip navigation, contact information in footer |
+| **National Informatics Centre (NIC) Standards** | High contrast mode, font size controls, no JavaScript-only interactions |
+| **STQC Compliance Ready** | Accessibility toolbar exposes all required accessibility controls as specified by the Standardisation Testing and Quality Certification directorate |
+
+---
+
+## 7. Security Architecture & Design
+
+### Overall Security Architecture
+
+SUVIDHA implements a **defense-in-depth** security model with security integrated **by design**, not as an afterthought. Every layer of the stack has security controls:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ Layer 1: Network Security                                   │
+│ • HTTPS/TLS via Vercel (auto-provisioned)                   │
+│ • CORS whitelist (only allowed origins)                     │
+│ • Helmet.js HTTP security headers                           │
+│ • Rate limiting (100 req/15min per IP)                      │
+└──────────────────────────┬──────────────────────────────────┘
+                           │
+┌──────────────────────────▼──────────────────────────────────┐
+│ Layer 2: Input Validation & Sanitization                    │
+│ • Zod schema validation on ALL endpoints                    │
+│ • HTML tag stripping middleware (XSS prevention)            │
+│ • x-kiosk-id header format validation                      │
+│ • Request body size limit (10MB)                            │
+└──────────────────────────┬──────────────────────────────────┘
+                           │
+┌──────────────────────────▼──────────────────────────────────┐
+│ Layer 3: Authentication & Authorization                     │
+│ • OTP-based authentication (no passwords)                   │
+│ • JWT access tokens (15-min expiry)                         │
+│ • Refresh token rotation (7-day expiry)                     │
+│ • Session tracking with kiosk ID                            │
+│ • Role-based access control (CITIZEN / STAFF / ADMIN)       │
+└──────────────────────────┬──────────────────────────────────┘
+                           │
+┌──────────────────────────▼──────────────────────────────────┐
+│ Layer 4: Data Security                                      │
+│ • bcrypt password hashing (where applicable)                │
+│ • Prisma ORM (parameterized queries — SQL injection proof)  │
+│ • Ownership verification on all data access                 │
+│ • No internal timestamps exposed in public endpoints        │
+└──────────────────────────┬──────────────────────────────────┘
+                           │
+┌──────────────────────────▼──────────────────────────────────┐
+│ Layer 5: Payment Security                                   │
+│ • Dodo Payments (PCI-DSS compliant)                         │
+│ • Webhook signature verification (standardwebhooks)         │
+│ • No payment card data touches our servers                  │
+│ • Idempotent payment recording (prevents double-charge)     │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Security Integration: By Design
+
+Security is not bolted on; it's woven into every module:
+
+| Security Pattern | Where Applied | Example |
+|------------------|---------------|---------|
+| **Validation-First** | Every API endpoint | `z.object({ phone: z.string().regex(/^[6-9]\d{9}$/) })` — invalid input is rejected before any business logic runs |
+| **Ownership Check** | All data queries | `where: { id: connectionId, userId: req.user!.id }` — users can only access their own data |
+| **Middleware Pipeline** | `index.ts` | `Helmet → CORS → Rate Limit → Body Parse → Sanitize → Validate Kiosk ID → Auth → Route` |
+| **Secure Defaults** | Auth config | Tokens expire in 15 minutes by default; refresh tokens rotate |
+| **Input Sanitization** | Global middleware | `sanitize.ts` strips HTML tags from all string fields recursively |
+
+### Threat Modelling
+
+| Threat | STRIDE Category | Mitigation |
+|--------|----------------|------------|
+| **Unauthorized access to another user's bills/connections** | Elevation of Privilege | Every database query includes `userId: req.user!.id` ownership check |
+| **SQL Injection** | Tampering | Prisma ORM uses parameterized queries exclusively |
+| **XSS via user input** | Tampering | `sanitizeInput` middleware strips HTML tags; React auto-escapes JSX output |
+| **Brute-force OTP attacks** | Spoofing | Rate limiting (100 req/15min per IP); OTP expires in 5 minutes |
+| **Session hijacking on kiosk** | Spoofing | 15-minute JWT expiry; session tracked per `x-kiosk-id`; explicit logout endpoint |
+| **CSRF attacks** | Tampering | CORS whitelist; JWT in Authorization header (not cookies) |
+| **Double payment** | Repudiation | Idempotent payment recording — checks for existing `transactionId` before creating |
+| **Information disclosure via /health** | Information Disclosure | Removed internal timestamp from health endpoint |
+| **Kiosk ID spoofing** | Spoofing | `validateKioskId` middleware enforces format: `^[a-zA-Z0-9_-]{1,64}$` |
+| **DDoS** | Denial of Service | Vercel Edge DDoS protection + rate limiting middleware |
+| **Payment data exposure** | Information Disclosure | All payment processing happens on Dodo's PCI-DSS infrastructure; we never store card details |
+
+### API Security Headers (via Helmet.js)
+
+```
+Content-Security-Policy: default-src 'self'
+X-Content-Type-Options: nosniff
+X-Frame-Options: SAMEORIGIN
+X-XSS-Protection: 1; mode=block
+Strict-Transport-Security: max-age=31536000
+Referrer-Policy: no-referrer
+```
+
+---
+
+## Appendix A: API Endpoint Summary
+
+| Module | Endpoints | Auth Required |
+|--------|-----------|---------------|
+| Auth | 4 (`send-otp`, `login`, `register`, `refresh`, `logout`) | No (public) |
+| Electricity | 4 (`readings`, `calculate-bill`, `tariffs`, `consumption`) | Yes |
+| Gas | 5 (`book`, `bookings`, `connections`, `readings`, `calculate-bill`) | Yes |
+| Water | 4 (`connections`, `readings`, `calculate-bill`, `consumption`) | Yes |
+| Municipal | 6 (`properties`, `tax`, `tax/pay`, `complaints`, `waste-schedule`, `waste/report`) | Yes |
+| Grievances | 4 (`list`, `detail`, `create`, `update`, `categories`) | Yes |
+| Payments | 4 (`create-order`, `confirm`, `verify`, `webhook`) | Yes (except webhook) |
+| SIGM | 6 (`check`, `acknowledge`, `check-lock`, `record-submission`, `history`, `analytics`) | Yes |
+| Billing | 2 (`list`, `detail`) | Yes |
+| Connections | 2 (`list`, `detail`) | Yes |
+| Notifications | 1 (`list`) | Yes |
+| Admin | 6 (`dashboard`, `users`, `activities`, `meter-readings`, `payments`, `service-usage`) | Yes (ADMIN/STAFF) |
+| Upload | 1 (`upload`) | Yes |
+| **Total** | **~50 endpoints** | |
+
+---
+
+## Appendix B: Key Design Decisions
+
+| Decision | Rationale |
+|----------|-----------|
+| **OTP-only auth (no passwords)** | Kiosk users are citizens who may not remember passwords. Phone-based OTP is familiar and eliminates password management. |
+| **Client-side NLP for Smart Assistant** | `intent-parser.ts` runs entirely in the browser — zero API latency, works offline, no cloud NLP costs. |
+| **Web Speech API for voice** | Browser-native — no Whisper/Google Speech API keys needed. Works on any modern kiosk browser. |
+| **15-minute JWT expiry** | Prevents the next person at a kiosk from inheriting the previous user's session. |
+| **SIGM module** | Guarantees that a citizen's task will be completed in a single kiosk visit — eliminating the "come back tomorrow" problem that plagues government offices. |
+| **Bilingual notifications** | Every notification is stored with both `title`/`titleHi` and `message`/`messageHi` — ensuring accessibility regardless of language preference. |
+| **Prisma ORM** | Type-safe database queries, auto-generated types, built-in SQL injection protection — critical for a public-facing government service. |
+
+---
+
+*Document generated for SUVIDHA Kiosk — C-DAC Smart City Initiative*  
+*Last Updated: March 2026*

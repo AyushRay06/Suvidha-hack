@@ -13,7 +13,7 @@ import {
   Loader2,
   Download,
   Printer,
-  Shield,
+  ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
@@ -44,8 +44,6 @@ interface PaymentResult {
   receiptNo: string;
 }
 
-type PaymentMethod = "UPI" | "CARD" | "NET_BANKING";
-
 export default function PayBillPage() {
   const { t, i18n } = useTranslation();
   const params = useParams();
@@ -55,38 +53,10 @@ export default function PayBillPage() {
 
   const [bill, setBill] = useState<Bill | null>(null);
   const [loading, setLoading] = useState(true);
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
   const [processing, setProcessing] = useState(false);
-  const [paymentResult, setPaymentResult] = useState<PaymentResult | null>(null);
-  const [upiId, setUpiId] = useState("");
-  const [sigmCompleted, setSigmCompleted] = useState(false);
-
-  // SIGM Hook Integration
-  const {
-    isChecking,
-    checkResult,
-    isModalOpen,
-    performCheck,
-    acknowledgeCheck,
-    recordSubmission,
-    closeModal,
-    reset: resetSIGM,
-    canProceed,
-    isBlocked,
-  } = useSIGM({
-    requestType: "BILL_PAYMENT",
-    serviceType: (bill?.serviceType as any) || "ELECTRICITY",
-    onCheckComplete: (result) => {
-      console.log("SIGM Check completed:", result.guaranteeStatus);
-    },
-    onError: (error) => {
-      toast({
-        title: "Guarantee Check Failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
+  const [paymentResult, setPaymentResult] = useState<PaymentResult | null>(
+    null,
+  );
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -94,13 +64,15 @@ export default function PayBillPage() {
       return;
     }
     fetchBill();
+    // Check if returning from Dodo checkout with payment result
+    checkPaymentReturn();
   }, [isAuthenticated, params.id]);
 
   const fetchBill = async () => {
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/billing/bills/${params.id}`,
-        { headers: { Authorization: `Bearer ${tokens?.accessToken}` } }
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/billing/bills/${params.id}`,
+        { headers: { Authorization: `Bearer ${tokens?.accessToken}` } },
       );
       if (res.ok) {
         const data = await res.json();
@@ -116,45 +88,89 @@ export default function PayBillPage() {
     }
   };
 
-  // Initiate SIGM check before payment
-  const handleInitiatePayment = async () => {
-    if (!paymentMethod || !bill) return;
+  /**
+   * Check if returning from Dodo Payments checkout.
+   * Dodo redirects back with query params: ?payment_id=xxx&status=succeeded
+   */
+  const checkPaymentReturn = async () => {
+    if (typeof window === "undefined") return;
 
-    // Perform SIGM guarantee check
-    await performCheck({
-      billId: bill.id,
-      amount: bill.totalAmount || bill.amount,
-      paymentMethod,
-    });
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentId = urlParams.get("payment_id");
+    const status = urlParams.get("status");
+    const sessionId = urlParams.get("session_id");
+
+    if (paymentId && status === "succeeded") {
+      setProcessing(true);
+      try {
+        // Confirm the payment on the backend
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/payments/confirm`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${tokens?.accessToken}`,
+            },
+            body: JSON.stringify({
+              billId: params.id,
+              paymentId,
+              sessionId: sessionId || undefined,
+              amount: bill?.amount || 0,
+              method: "UPI",
+            }),
+          },
+        );
+
+        const data = await res.json();
+
+        if (data.success) {
+          setPaymentResult({
+            transactionId: data.data.transactionId,
+            amount: data.data.amount,
+            status: data.data.status,
+            timestamp: new Date().toISOString(),
+            receiptNumber: data.data.receiptNo,
+          });
+          toast({
+            title: "Payment Successful!",
+            description: `Transaction ID: ${data.data.transactionId}`,
+            variant: "success",
+          });
+        } else {
+          toast({
+            title: "Payment confirmation failed",
+            description: data.error || "Please contact support",
+            variant: "destructive",
+          });
+        }
+      } catch (error: any) {
+        console.error("Payment confirmation error:", error);
+        toast({
+          title: "Error",
+          description: "Failed to confirm payment. Please contact support.",
+          variant: "destructive",
+        });
+      } finally {
+        setProcessing(false);
+        // Clean up URL params
+        window.history.replaceState({}, "", window.location.pathname);
+      }
+    }
   };
 
-  // Handle acknowledgment
-  const handleAcknowledge = async (sigmLogId: string) => {
-    await acknowledgeCheck();
-  };
-
-  // Handle cancel from modal
-  const handleCancel = () => {
-    closeModal();
-    resetSIGM();
-  };
-
-  // Handle proceed after SIGM check
-  const handleProceed = async () => {
-    closeModal();
-    setSigmCompleted(true);
-    await processPayment();
-  };
-
-  // Process the actual payment
-  const processPayment = async () => {
-    if (!paymentMethod || !bill) return;
-
+  /**
+   * Initiate payment: create a Dodo checkout session and redirect
+   */
+  const handlePayment = async () => {
+    if (!bill) return;
     setProcessing(true);
 
     try {
+      const returnUrl = `${window.location.origin}/bills/${bill.id}/pay`;
+
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/billing/pay`,
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/payments/create-order`,
         {
           method: "POST",
           headers: {
@@ -163,47 +179,29 @@ export default function PayBillPage() {
           },
           body: JSON.stringify({
             billId: bill.id,
-            amount: bill.totalAmount || bill.amount,
-            method: paymentMethod,
+            amount: bill.amount,
+            returnUrl,
           }),
-        }
+        },
       );
 
       const data = await res.json();
 
-      if (data.success) {
-        setPaymentResult(data.data);
-
-        // Record the submission with SIGM (fire-and-forget, don't block payment success)
-        if (checkResult?.sigmLogId) {
-          recordSubmission(data.data.paymentId, bill.id).catch(() => {
-            // Silently ignore SIGM recording errors - payment was successful
-          });
-        }
-
-        toast({
-          title: "Payment Successful!",
-          description: `Receipt No: ${data.data.receiptNo}`,
-        });
+      if (data.success && data.data.checkoutUrl) {
+        // Redirect user to Dodo Payments hosted checkout
+        window.location.href = data.data.checkoutUrl;
       } else {
-        throw new Error(data.error || "Payment failed");
+        throw new Error(data.error || "Failed to create payment session");
       }
     } catch (error: any) {
       toast({
-        title: "Payment Failed",
+        title: "Payment Error",
         description: error.message,
         variant: "destructive",
       });
-    } finally {
       setProcessing(false);
     }
   };
-
-  const paymentMethods = [
-    { id: "UPI" as const, name: "UPI / BHIM", icon: Smartphone, desc: "Pay using any UPI app" },
-    { id: "CARD" as const, name: "Credit/Debit Card", icon: CreditCard, desc: "Visa, Mastercard, RuPay" },
-    { id: "NET_BANKING" as const, name: "Net Banking", icon: Building2, desc: "All major banks" },
-  ];
 
   if (!isAuthenticated) return null;
 
@@ -214,7 +212,9 @@ export default function PayBillPage() {
         <header className="bg-success text-white py-4 px-6">
           <div className="max-w-md mx-auto text-center">
             <CheckCircle className="w-12 h-12 mx-auto mb-2" />
-            <h1 className="font-heading text-xl font-bold">Payment Successful!</h1>
+            <h1 className="font-heading text-xl font-bold">
+              Payment Successful!
+            </h1>
           </div>
         </header>
 
@@ -253,17 +253,33 @@ export default function PayBillPage() {
               </div>
               <div className="flex justify-between py-2 border-b">
                 <span className="text-muted-foreground">Receipt No.</span>
-                <span className="font-mono">{paymentResult.receiptNo}</span>
+                <span className="font-mono">{paymentResult.receiptNumber}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b">
+                <span className="text-muted-foreground">Date & Time</span>
+                <span>
+                  {new Date(paymentResult.timestamp).toLocaleString()}
+                </span>
+              </div>
+              <div className="flex justify-between py-2 border-b">
+                <span className="text-muted-foreground">Gateway</span>
+                <span className="font-medium text-primary">Dodo Payments</span>
               </div>
               <div className="flex justify-between py-2">
                 <span className="text-muted-foreground">Status</span>
-                <span className="text-success font-medium">{paymentResult.status}</span>
+                <span className="text-success font-medium">
+                  {paymentResult.status}
+                </span>
               </div>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4 mb-6">
-            <Button variant="outline" className="h-14" onClick={() => window.print()}>
+            <Button
+              variant="outline"
+              className="h-14"
+              onClick={() => window.print()}
+            >
               <Printer className="w-4 h-4 mr-2" />
               Print
             </Button>
@@ -283,11 +299,16 @@ export default function PayBillPage() {
     );
   }
 
-  // Loading State
-  if (loading || !bill) {
+  // Loading / Processing State
+  if (loading || !bill || processing) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-4">
         <Loader2 className="w-8 h-8 animate-spin text-cta" />
+        {processing && (
+          <p className="text-muted-foreground text-sm">
+            Processing your payment...
+          </p>
+        )}
       </div>
     );
   }
@@ -323,7 +344,9 @@ export default function PayBillPage() {
         <div className="bg-white rounded-xl shadow-kiosk p-6 mb-6">
           <div className="flex justify-between items-start mb-4">
             <div>
-              <p className="text-muted-foreground text-sm">{bill.serviceType || bill.connection?.serviceType}</p>
+              <p className="text-muted-foreground text-sm">
+                {bill.serviceType}
+              </p>
               <p className="text-sm text-muted-foreground">
                 Connection: {bill.connectionNumber || bill.connection?.connectionNo}
               </p>
@@ -358,56 +381,58 @@ export default function PayBillPage() {
           </div>
         </div>
 
-        {/* Payment Methods */}
-        <h2 className="font-heading text-lg text-primary mb-4">Select Payment Method</h2>
-        <div className="space-y-3 mb-6">
-          {paymentMethods.map((method) => (
-            <button
-              key={method.id}
-              onClick={() => setPaymentMethod(method.id)}
-              className={`w-full p-4 rounded-xl border-2 flex items-center gap-4 transition-all cursor-pointer ${paymentMethod === method.id
-                ? "border-cta bg-cta/5"
-                : "border-slate-200 hover:border-cta/50"
-                }`}
-            >
-              <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${paymentMethod === method.id ? "bg-cta text-white" : "bg-slate-100 text-slate-600"
-                }`}>
-                <method.icon className="w-6 h-6" />
-              </div>
-              <div className="text-left">
-                <p className="font-medium text-primary">{method.name}</p>
-                <p className="text-sm text-muted-foreground">{method.desc}</p>
-              </div>
-              {paymentMethod === method.id && (
-                <CheckCircle className="w-5 h-5 text-cta ml-auto" />
-              )}
-            </button>
-          ))}
+        {/* Payment Info */}
+        <div className="bg-blue-50 rounded-xl p-4 mb-6 border border-blue-100">
+          <div className="flex items-start gap-3">
+            <CreditCard className="w-5 h-5 text-blue-600 mt-0.5" />
+            <div>
+              <p className="font-medium text-blue-900 text-sm">
+                Secure Payment via Dodo Payments
+              </p>
+              <p className="text-blue-700 text-xs mt-1">
+                You will be redirected to Dodo Payments secure checkout page.
+                Supports UPI, Cards, Net Banking, and Wallets.
+              </p>
+            </div>
+          </div>
         </div>
 
-        {/* UPI ID Input (if UPI selected) */}
-        {paymentMethod === "UPI" && (
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-primary mb-2">
-              Enter UPI ID
-            </label>
-            <input
-              type="text"
-              value={upiId}
-              onChange={(e) => setUpiId(e.target.value)}
-              placeholder="yourname@upi"
-              className="w-full h-14 px-4 rounded-lg border-2 border-slate-200 focus:border-cta focus:ring-2 focus:ring-cta/20 outline-none transition-colors text-lg"
-            />
+        {/* Supported Payment Methods Display */}
+        <div className="mb-6">
+          <h2 className="font-heading text-lg text-primary mb-3">
+            Supported Methods
+          </h2>
+          <div className="grid grid-cols-3 gap-3">
+            {[
+              { icon: Smartphone, name: "UPI", desc: "UPI / BHIM" },
+              { icon: CreditCard, name: "Cards", desc: "Visa / MC / RuPay" },
+              { icon: Building2, name: "Net Banking", desc: "All banks" },
+            ].map((method) => (
+              <div
+                key={method.name}
+                className="p-3 rounded-xl border border-slate-200 bg-white text-center"
+              >
+                <div className="w-10 h-10 mx-auto rounded-lg bg-slate-100 flex items-center justify-center mb-2">
+                  <method.icon className="w-5 h-5 text-slate-600" />
+                </div>
+                <p className="font-medium text-xs text-primary">
+                  {method.name}
+                </p>
+                <p className="text-[10px] text-muted-foreground">
+                  {method.desc}
+                </p>
+              </div>
+            ))}
           </div>
-        )}
+        </div>
 
         {/* Pay Button with SIGM Check */}
         <Button
           variant="cta"
           size="xl"
           className="w-full"
-          disabled={!paymentMethod || processing || isChecking || (paymentMethod === "UPI" && !upiId)}
-          onClick={handleInitiatePayment}
+          disabled={processing}
+          onClick={handlePayment}
         >
           {isChecking ? (
             <>
@@ -417,18 +442,18 @@ export default function PayBillPage() {
           ) : processing ? (
             <>
               <Loader2 className="w-5 h-5 animate-spin mr-2" />
-              Processing...
+              Redirecting to checkout...
             </>
           ) : (
             <>
-              <Shield className="w-5 h-5 mr-2" />
-              Verify & Pay ₹{(bill.totalAmount || bill.amount)?.toLocaleString()}
+              <ExternalLink className="w-5 h-5 mr-2" />
+              Pay ₹{bill.amount.toLocaleString()}
             </>
           )}
         </Button>
 
         <p className="text-center text-xs text-muted-foreground mt-4">
-          🔒 Secured by 256-bit encryption • Single-Interaction Guaranteed
+          🔒 Payments secured by Dodo Payments · 256-bit encryption
         </p>
       </div>
     </div>

@@ -5,7 +5,7 @@
 
 export type GuaranteeStatus = 'GUARANTEED' | 'NOT_GUARANTEED' | 'BLOCKED';
 
-export type RequestType =
+export type SIGMRequestType =
     | 'BILL_PAYMENT'
     | 'NEW_CONNECTION'
     | 'COMPLAINT_REGISTRATION'
@@ -36,7 +36,7 @@ export interface BackendAction {
 
 export interface GuaranteeCheckResult {
     guaranteeStatus: GuaranteeStatus;
-    requestType: RequestType;
+    requestType: SIGMRequestType;
     serviceType: ServiceType;
     blockingReasons: BlockingReason[];
     backendActions: BackendAction[];
@@ -62,7 +62,7 @@ export interface ValidationResult {
 }
 
 export interface GuaranteeCheckRequest {
-    requestType: RequestType;
+    requestType: SIGMRequestType;
     serviceType: ServiceType;
     userId: string;
     kioskId?: string;
@@ -84,7 +84,7 @@ export interface RequestLockCheck {
 
 // Configuration for different request types
 export interface SIGMConfig {
-    requestType: RequestType;
+    requestType: SIGMRequestType;
     requiredDocuments: string[];
     serviceAreaCheck: boolean;
     technicianRequired: boolean;
@@ -92,7 +92,7 @@ export interface SIGMConfig {
     lockDuration: number;  // Hours
 }
 
-export const SIGM_CONFIGS: Record<RequestType, SIGMConfig> = {
+export const SIGM_CONFIGS: Record<SIGMRequestType, SIGMConfig> = {
     BILL_PAYMENT: {
         requestType: 'BILL_PAYMENT',
         requiredDocuments: [],
