@@ -26,7 +26,7 @@
     
     /* Muted - Light Gray */
     --muted: 210 16% 94%;            /* #e8eef7 */
-    --muted-foreground: 215 16% 47%; /* #708090 */
+    --muted-foreground: 215 20% 35%; /* #4a5f73 — 4.5:1 on white */
     
     /* Borders & Inputs */
     --border: 210 16% 87%;           /* #d9dce3 */
@@ -50,6 +50,7 @@
   body {
     @apply bg-background text-foreground font-body;
     font-feature-settings: "rlig" 1, "calt" 1;
+    font-size: calc(1rem * var(--accessibility-font-scale, 1));
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -84,7 +85,7 @@
            rounded-2xl bg-cta text-white
            transition-all duration-200 ease-out
            hover:bg-cta/90 active:scale-95
-           focus:outline-none focus:ring-4 focus:ring-cta/30
+           focus:ring-4 focus:ring-cta/30
            cursor-pointer font-heading;
   }
 
@@ -93,7 +94,7 @@
            rounded-2xl bg-muted text-foreground
            transition-all duration-200 ease-out
            hover:bg-muted/80 active:scale-95
-           focus:outline-none focus:ring-4 focus:ring-cta/30
+           focus:ring-4 focus:ring-cta/30
            cursor-pointer font-heading;
   }
 
@@ -270,3 +271,23 @@
     @apply text-xl mb-4;
   }
 }
+
+/* High contrast mode */
+.high-contrast {
+  --foreground: 0 0% 0%;
+  --background: 0 0% 100%;
+  --border: 0 0% 0%;
+  --muted-foreground: 0 0% 10%;
+  --ring: 0 0% 0%;
+}
+
+.high-contrast .kiosk-card,
+.high-contrast .kiosk-card-small {
+  border-width: 3px;
+  border-color: black;
+}
+
+.high-contrast .kiosk-button {
+  border: 3px solid black;
+}
+

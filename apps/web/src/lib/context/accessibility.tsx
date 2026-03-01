@@ -2,13 +2,14 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-type FontSize = 'normal' | 'large' | 'extra-large';
+type FontSize = 'normal' | 'large' | 'extra-large' | 'senior';
 type ContrastMode = 'normal' | 'high';
 
 interface AccessibilitySettings {
     fontSize: FontSize;
     contrastMode: ContrastMode;
     reducedMotion: boolean;
+    ttsEnabled: boolean;
 }
 
 interface AccessibilityContextType {
@@ -16,9 +17,11 @@ interface AccessibilityContextType {
     setFontSize: (size: FontSize) => void;
     setContrastMode: (mode: ContrastMode) => void;
     setReducedMotion: (reduced: boolean) => void;
+    toggleTTS: () => void;
     increaseFontSize: () => void;
     decreaseFontSize: () => void;
     toggleHighContrast: () => void;
+    enableSeniorMode: () => void;
     resetSettings: () => void;
 }
 
@@ -26,6 +29,7 @@ const defaultSettings: AccessibilitySettings = {
     fontSize: 'normal',
     contrastMode: 'normal',
     reducedMotion: false,
+    ttsEnabled: false,
 };
 
 const AccessibilityContext = createContext<AccessibilityContextType | undefined>(undefined);
@@ -36,12 +40,14 @@ const fontSizeClasses: Record<FontSize, string> = {
     'normal': '',
     'large': 'text-lg',
     'extra-large': 'text-xl',
+    'senior': 'text-2xl',
 };
 
 const fontSizeScale: Record<FontSize, string> = {
     'normal': '1',
-    'large': '1.15',
-    'extra-large': '1.3',
+    'large': '1.3',
+    'extra-large': '1.6',
+    'senior': '2',
 };
 
 export function AccessibilityProvider({ children }: { children: ReactNode }) {
@@ -111,14 +117,16 @@ export function AccessibilityProvider({ children }: { children: ReactNode }) {
         setSettings(prev => ({
             ...prev,
             fontSize: prev.fontSize === 'normal' ? 'large' :
-                prev.fontSize === 'large' ? 'extra-large' : 'extra-large',
+                prev.fontSize === 'large' ? 'extra-large' :
+                prev.fontSize === 'extra-large' ? 'senior' : 'senior',
         }));
     };
 
     const decreaseFontSize = () => {
         setSettings(prev => ({
             ...prev,
-            fontSize: prev.fontSize === 'extra-large' ? 'large' :
+            fontSize: prev.fontSize === 'senior' ? 'extra-large' :
+                prev.fontSize === 'extra-large' ? 'large' :
                 prev.fontSize === 'large' ? 'normal' : 'normal',
         }));
     };
@@ -128,6 +136,19 @@ export function AccessibilityProvider({ children }: { children: ReactNode }) {
             ...prev,
             contrastMode: prev.contrastMode === 'normal' ? 'high' : 'normal',
         }));
+    };
+
+    const toggleTTS = () => {
+        setSettings(prev => ({ ...prev, ttsEnabled: !prev.ttsEnabled }));
+    };
+
+    const enableSeniorMode = () => {
+        setSettings({
+            fontSize: 'senior',
+            contrastMode: 'high',
+            reducedMotion: true,
+            ttsEnabled: true,
+        });
     };
 
     const resetSettings = () => {
@@ -141,9 +162,11 @@ export function AccessibilityProvider({ children }: { children: ReactNode }) {
                 setFontSize,
                 setContrastMode,
                 setReducedMotion,
+                toggleTTS,
                 increaseFontSize,
                 decreaseFontSize,
                 toggleHighContrast,
+                enableSeniorMode,
                 resetSettings,
             }}
         >

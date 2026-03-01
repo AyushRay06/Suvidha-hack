@@ -33,6 +33,7 @@ import { serviceRequestRoutes } from './modules/service-request';
 // Import middleware
 import { errorHandler } from './middleware/errorHandler';
 import { requestLogger } from './middleware/logger';
+import { sanitizeInput, validateKioskId } from './middleware/sanitize';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -69,6 +70,10 @@ app.use('/api', limiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+// Input sanitization & kiosk ID validation (after body parsing)
+app.use(sanitizeInput);
+app.use(validateKioskId);
+
 // Request logging
 app.use(requestLogger);
 
@@ -77,7 +82,6 @@ app.get('/health', (req, res) => {
   res.json({
     success: true,
     message: 'SUVIDHA API is running',
-    timestamp: new Date().toISOString(),
   });
 });
 
